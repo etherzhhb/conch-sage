@@ -1,8 +1,8 @@
 from chatcli.core.config import load_config
-import os
 import uuid
 from pathlib import Path
 import json
+import numpy as np
 
 DATA_PATH = Path("data/conversations.json")
 SAVE_DIR = Path("data")
