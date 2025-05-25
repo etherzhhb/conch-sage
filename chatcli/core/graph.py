@@ -34,7 +34,7 @@ class ConversationGraph:
             "children": [],
             "tags": []
         }
-                config = load_config()
+        config = load_config()
         if config.get("auto_embed", False):
             self.embed_node(node_id, dry_run=dry_run)
         self._save()
@@ -54,7 +54,7 @@ class ConversationGraph:
             "tags": []
         }
         self.data[parent_id]["children"].append(node_id)
-                config = load_config()
+        config = load_config()
         if config.get("auto_embed", False):
             self.embed_node(node_id, dry_run=dry_run)
         self._save()
@@ -81,7 +81,7 @@ class ConversationGraph:
         if node_id not in self.data:
             raise ValueError("Node ID not found")
         self.data[node_id]["response"] = new_response
-                config = load_config()
+        config = load_config()
         if config.get("auto_embed", False):
             self.embed_node(node_id, dry_run=dry_run)
         self._save()
@@ -90,7 +90,7 @@ class ConversationGraph:
         if node_id not in self.data:
             raise ValueError("Node ID not found")
         self.data[node_id]["comment"] = comment
-                config = load_config()
+        config = load_config()
         if config.get("auto_embed", False):
             self.embed_node(node_id, dry_run=dry_run)
         self._save()
@@ -102,7 +102,7 @@ class ConversationGraph:
         self.data[node_id]["response"] = f"[MOCK RETRY to: {prompt}]"
         if new_prompt:
             self.data[node_id]["prompt"] = new_prompt
-                config = load_config()
+        config = load_config()
         if config.get("auto_embed", False):
             self.embed_node(node_id, dry_run=dry_run)
         self._save()
@@ -120,7 +120,7 @@ class ConversationGraph:
             return
         with open(filepath, "r") as f:
             self.data = json.load(f)
-                config = load_config()
+        config = load_config()
         if config.get("auto_embed", False):
             self.embed_node(node_id, dry_run=dry_run)
         self._save()
@@ -136,7 +136,7 @@ class ConversationGraph:
             self.data[node_id]["tags"] = []
         if tag not in self.data[node_id]["tags"]:
             self.data[node_id]["tags"].append(tag)
-                config = load_config()
+        config = load_config()
         if config.get("auto_embed", False):
             self.embed_node(node_id, dry_run=dry_run)
         self._save()
@@ -146,7 +146,7 @@ class ConversationGraph:
             raise ValueError("Node ID not found")
         if "tags" in self.data[node_id] and tag in self.data[node_id]["tags"]:
             self.data[node_id]["tags"].remove(tag)
-                config = load_config()
+        config = load_config()
         if config.get("auto_embed", False):
             self.embed_node(node_id, dry_run=dry_run)
         self._save()
@@ -171,7 +171,7 @@ class ConversationGraph:
         full_text = "\n".join(gather_subtree_text(node_id))
         summary = f"[SUMMARY of subtree rooted at {node_id}]\n" + full_text[:300] + "..."
         self.data[node_id]["subtree_summary"] = summary
-                config = load_config()
+        config = load_config()
         if config.get("auto_embed", False):
             self.embed_node(node_id, dry_run=dry_run)
         self._save()
@@ -184,7 +184,7 @@ class ConversationGraph:
         self.data[from_node_id].setdefault("citations", [])
         if to_node_id not in self.data[from_node_id]["citations"]:
             self.data[from_node_id]["citations"].append(to_node_id)
-                config = load_config()
+        config = load_config()
         if config.get("auto_embed", False):
             self.embed_node(node_id, dry_run=dry_run)
         self._save()
@@ -280,7 +280,7 @@ class ConversationGraph:
         }
         if current_id and current_id in self.data:
             self.data[current_id]["children"].append(node_id)
-                config = load_config()
+        config = load_config()
         if config.get("auto_embed", False):
             self.embed_node(node_id, dry_run=dry_run)
         self._save()
@@ -350,7 +350,7 @@ class ConversationGraph:
         }
         if current_id:
             self.data[current_id]["children"].append(node_id)
-                config = load_config()
+        config = load_config()
         if config.get("auto_embed", False):
             self.embed_node(node_id, dry_run=dry_run)
         self._save()
@@ -373,7 +373,7 @@ class ConversationGraph:
             "tags": ["doc", "improved"]
         }
         self.data[node_id]["children"].append(new_id)
-                config = load_config()
+        config = load_config()
         if config.get("auto_embed", False):
             self.embed_node(node_id, dry_run=dry_run)
         self._save()
@@ -511,7 +511,7 @@ class ConversationGraph:
             print(f"[DRY RUN] Would embed node {node_id}")
         else:
             node["embedding"] = self.get_embedding(combined)
-                config = load_config()
+        config = load_config()
         if config.get("auto_embed", False):
             self.embed_node(node_id, dry_run=dry_run)
         self._save()
