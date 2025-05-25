@@ -1,0 +1,47 @@
+import pytest
+from chatcli.core.graph import ConversationGraph
+
+@pytest.fixture
+def graph():
+    return ConversationGraph(storage_path=":memory:")
+
+def test_smart_ask_mock(graph):
+    nid = graph.new("Start node")
+    graph.embed_node(nid)
+    reply_id = graph.reply(nid, "What is loop fusion?")
+    graph.data[reply_id]["response"] = "Loop fusion combines loops for locality."
+    graph.embed_node(reply_id)
+
+    result, matches, prompt = graph.smart_ask("loop fusion in scheduling", from_node_id=reply_id, top_k=2)
+    assert isinstance(result, str)
+    assert isinstance(prompt, str)
+    assert isinstance(matches, list)
+    assert "loop fusion" in prompt.lower()
+    assert "question" in prompt.lower()
+
+def test_promote_smart_ask(graph):
+    nid = graph.new("Parent")
+    child = graph.reply(nid, "What is Halide?")
+    graph.data[child]["smart_ask_prompt"] = "Explain Halide"
+    graph.data[child]["response"] = "Halide is a scheduling DSL."
+
+    new_id = graph.reply(child, graph.data[child]["smart_ask_prompt"])
+    graph.data[new_id]["response"] = graph.data[child]["response"]
+
+    assert new_id in graph.data
+    assert graph.data[new_id]["prompt"] == "Explain Halide"
+    assert graph.data[new_id]["response"] == "Halide is a scheduling DSL."
+    assert graph.data[new_id]["parent"] == child
+
+def test_cite_smart_ask(graph):
+    nid = graph.new("Node A")
+    graph.data[nid]["smart_ask_citations"] = []
+    for i in range(3):
+        cid = graph.new(f"Reference {i}")
+        graph.embed_node(cid)
+        graph.data[nid]["smart_ask_citations"].append(cid)
+
+    for target in graph.data[nid]["smart_ask_citations"]:
+        graph.add_citation(nid, target)
+
+    assert len(graph.data[nid]["citations"]) == 3

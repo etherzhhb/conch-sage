@@ -1,0 +1,12 @@
+# chatcli global config
+
+provider: openai  # or 'bedrock'
+
+openai_api_key: sk-xxxxxxx
+openai_embedding_model: text-embedding-3-small
+openai_chat_model: gpt-4o
+
+bedrock_region: us-west-2
+bedrock_model: anthropic.claude-3-sonnet
+
+auto_embed: true

@@ -1,0 +1,6 @@
+pytest
+faiss-cpu
+prompt_toolkit
+typer
+pyyaml
+pytest-cov

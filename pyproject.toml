@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "conch-sage"
+version = "0.1.0"
+description = "CLI-based personal research assistant with semantic memory and LLM workflows."
+authors = [{ name = "Your Name", email = "your@email.com" }]
+dependencies = []
+
+[project.scripts]
+conch-sage = "chatcli.main:main"
