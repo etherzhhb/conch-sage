@@ -140,11 +140,7 @@ class ChatCLIShell(cmd.Cmd):
         if not results:
             print("No similar nodes found.")
             return
-        for r in results:
-            if isinstance(r, tuple):
-                node_id, score = r
-            else:
-                node_id, score = r, 0.0
+        for node_id, score in results:
             prompt = self.graph.data[node_id].get('prompt', '')
             print(f"{node_id[:8]}  {score:.2f}  {prompt[:60]}")
 
