@@ -12,12 +12,9 @@ def test_smart_ask_mock(graph):
     graph.data[reply_id]["response"] = "Loop fusion combines loops for locality."
     graph.embed_node(reply_id)
 
-    result, matches, prompt = graph.smart_ask("loop fusion in scheduling", from_node_id=reply_id, top_k=2)
+    result = graph.smart_ask("loop fusion in scheduling", from_node_id=reply_id, top_k=2)
     assert isinstance(result, str)
-    assert isinstance(prompt, str)
-    assert isinstance(matches, list)
-    assert "loop fusion" in prompt.lower()
-    assert "question" in prompt.lower()
+    assert "loop" in result.lower()
 
 def test_simulated_smart_ask_reply(graph):
     nid = graph.new("Parent")
