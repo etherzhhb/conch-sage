@@ -10,23 +10,31 @@ import faiss
 DATA_PATH = Path("data/conversations.json")
 SAVE_DIR = Path("data")
 
+
 class ConversationGraph:
     def __init__(self, storage_path=None):
         if storage_path and storage_path != ":memory:":
-            global DATA_PATH
-            DATA_PATH = Path(storage_path)
-        self.data = self._load()
+            self._path = Path(storage_path)
+            self.data, self._last_smart_ask = self._load(self._path)
+        else:
+            self._path = None
+            self.data = {}
+            self._last_smart_ask = None
 
-    def _load(self):
-        if not DATA_PATH.exists():
-            return {}
-        with open(DATA_PATH, "r") as f:
-            return json.load(f)
+    def _load(self, path):
+        if not path.exists():
+            return {}, None
+        with open(path, "r") as f:
+            obj = json.load(f)
+            return obj.get("nodes", {}), obj.get("last_smart_ask", None)
 
     def _save(self):
         os.makedirs(os.path.dirname(DATA_PATH), exist_ok=True)
         with open(DATA_PATH, "w") as f:
-            json.dump(self.data, f, indent=2)
+            json.dump({
+                "nodes": self.data,
+                "last_smart_ask": self._last_smart_ask
+            }, f, indent=2)
 
     def _generate_id(self):
         return str(uuid.uuid4())[:8]
@@ -84,7 +92,8 @@ class ConversationGraph:
         tag_str = f"  [tags: {', '.join(node['tags'])}]" if node['tags'] else ""
         subtree_summary_str = f"\n{' ' * (indent + 2)}[subtree_summary] {node['subtree_summary']}" if 'subtree_summary' in node else ""
         citation_str = f"\n{' ' * (indent + 2)}[cites] {', '.join(node['citations'])}" if 'citations' in node else ""
-        print(" " * indent + f"[{node['id']}] {node['prompt']}{comment_str}{tag_str}" + summary_str + subtree_summary_str + citation_str)
+        print(
+            " " * indent + f"[{node['id']}] {node['prompt']}{comment_str}{tag_str}" + summary_str + subtree_summary_str + citation_str)
         for child_id in node["children"]:
             self.print_tree(child_id, indent + 2)
 
@@ -167,7 +176,6 @@ class ConversationGraph:
             raise ValueError("Node ID not found")
         return self.data[node_id].get("tags", [])
 
-
     def summarize_subtree(self, node_id, dry_run_embedding=False):
         if node_id not in self.data:
             raise ValueError("Node ID not found")
@@ -187,7 +195,6 @@ class ConversationGraph:
             self.embed_node(node_id, dry_run=dry_run_embedding)
         self._save()
         return summary
-
 
     def add_citation(self, from_node_id, to_node_id, dry_run_embedding=False):
         if from_node_id not in self.data or to_node_id not in self.data:
@@ -211,7 +218,6 @@ class ConversationGraph:
             if node_id in n.get("citations", [])
         ]
 
-
     def filter_cites(self, node_id):
         return self.get_citations(node_id)
 
@@ -228,14 +234,12 @@ class ConversationGraph:
             f"[{nid}] {self.data[nid]['prompt'][:60]}..." for nid in node_ids if nid in self.data
         ]
 
-
     def preview_node(self, node_id):
         if node_id not in self.data:
             return f"[{node_id}] (not found)"
         node = self.data[node_id]
         prompt = node['prompt'][:80].replace("\n", " ")
         return f"[{node_id}] {prompt}"
-
 
     def export_mermaid(self, filename):
         lines = ["graph TD"]
@@ -252,29 +256,26 @@ class ConversationGraph:
             f.write("\n".join(lines))
         print(f"Exported to Mermaid format: {filepath}")
 
-
     def search(self, query):
         query_lower = query.lower()
         results = []
         for node in self.data.values():
             if (query_lower in node["prompt"].lower()
-                or query_lower in node["response"].lower()
-                or query_lower in node.get("comment", "").lower()
-                or query_lower in " ".join(node.get("tags", [])).lower()):
+                    or query_lower in node["response"].lower()
+                    or query_lower in node.get("comment", "").lower()
+                    or query_lower in " ".join(node.get("tags", [])).lower()):
                 results.append(node["id"])
         return results
-
 
     def mock_websearch(self, query, max_results=5):
         return [
             {
-                "title": f"Result {i+1} for '{query}'",
-                "snippet": f"This is a mock snippet for result {i+1}.",
-                "url": f"https://example.com/{i+1}"
+                "title": f"Result {i + 1} for '{query}'",
+                "snippet": f"This is a mock snippet for result {i + 1}.",
+                "url": f"https://example.com/{i + 1}"
             }
             for i in range(max_results)
         ]
-
 
     def save_web_result(self, result, current_id=None, dry_run_embedding=False):
         node_id = self._generate_id()
@@ -296,7 +297,6 @@ class ConversationGraph:
             self.embed_node(node_id, dry_run=dry_run_embedding)
         self._save()
         return node_id
-
 
     def ask_llm_with_context(self, node_id, question):
         config = load_config()
@@ -328,11 +328,9 @@ class ConversationGraph:
         response = f"[MOCK LLM RESPONSE]\nUsing sources:\n{context}\n\nAnswer: {question} is a good question!"
         return response
 
-
     def estimate_tokens(self, text):
         # Basic token estimate: ~1 token per 4 characters (OpenAI rough rule)
         return len(text) // 4
-
 
     def summarize_text(self, text, max_length=200):
         config = load_config()
@@ -340,7 +338,6 @@ class ConversationGraph:
         model = config.get("openai_chat_model") if provider == "openai" else config.get("bedrock_model")
         print(f"[SUMMARIZER] Using {provider}: {model}")
         return "[SUMMARY] " + text[:max_length] + "..."
-
 
     def import_doc(self, filepath, current_id=None, dry_run_embedding=False):
         from pathlib import Path
@@ -398,7 +395,6 @@ class ConversationGraph:
         Path(output_path).write_text(content)
         return output_path
 
-
     def save_doc_version(self, node_id, folder="docs"):
         import subprocess
         from pathlib import Path
@@ -422,14 +418,14 @@ class ConversationGraph:
         import tempfile
         if node1_id not in self.data or node2_id not in self.data:
             raise ValueError("Node IDs not found")
-        with tempfile.NamedTemporaryFile(mode="w", delete=False) as f1, tempfile.NamedTemporaryFile(mode="w", delete=False) as f2:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as f1, tempfile.NamedTemporaryFile(mode="w",
+                                                                                                    delete=False) as f2:
             f1.write(self.data[node1_id]["response"])
             f2.write(self.data[node2_id]["response"])
             f1_path, f2_path = f1.name, f2.name
 
         result = subprocess.run(["git", "diff", "--no-index", f1_path, f2_path], capture_output=True, text=True)
         return result.stdout.strip()
-
 
     def get_inline_diff(self, node_id):
         import subprocess
@@ -443,14 +439,14 @@ class ConversationGraph:
         parent_text = self.data[parent_id]["response"]
         current_text = node["response"]
 
-        with tempfile.NamedTemporaryFile(mode="w", delete=False) as f1, tempfile.NamedTemporaryFile(mode="w", delete=False) as f2:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as f1, tempfile.NamedTemporaryFile(mode="w",
+                                                                                                    delete=False) as f2:
             f1.write(parent_text)
             f2.write(current_text)
             f1_path, f2_path = f1.name, f2.name
 
         result = subprocess.run(["git", "diff", "--no-index", f1_path, f2_path], capture_output=True, text=True)
         return result.stdout.strip() if result.returncode in (0, 1) else None
-
 
     def export_version_graph(self, filename):
         lines = ["graph TD"]
@@ -474,7 +470,6 @@ class ConversationGraph:
         with open(output_path, "w") as f:
             f.write("\n".join(lines))
         print(f"Exported document version graph to {output_path}")
-
 
     def export_citation_graph(self, filename):
         lines = ["graph TD"]
@@ -504,14 +499,12 @@ class ConversationGraph:
             raise RuntimeError(result.stderr)
         print(f"SVG rendered to {output_path}")
 
-
     def get_embedding(self, text):
         config = load_config()
         provider = config["provider"]
         print(f"[Embedding] Using {provider} (mock)")
         # Mock: hash text to 4-D vector for now
         return [float(hash(text + str(i)) % 1000) / 1000 for i in range(4)]
-
 
     def embed_node(self, node_id, dry_run=False):
         if node_id not in self.data:
@@ -545,9 +538,8 @@ class ConversationGraph:
         vectors = []
 
         for node_id, node in self.data.items():
-            
-                id_map.append(node_id)
-                vectors.append(np.array(node["embedding"], dtype=np.float32))
+            id_map.append(node_id)
+            vectors.append(np.array(node["embedding"], dtype=np.float32))
 
         if not vectors:
             print("No embedded nodes found.")
@@ -574,7 +566,6 @@ class ConversationGraph:
         if not dry_run:
             print(f"Embedded {count} nodes.")
 
-
     def embed_summary(self, node_id):
         if node_id not in self.data:
             raise ValueError("Node not found")
@@ -585,7 +576,6 @@ class ConversationGraph:
         else:
             print("No embedding found.")
 
-
     def smart_cite(self, query_text, from_node_id=None, top_k=1):
         matches = self.simsearch(query_text, top_k=top_k)
         if from_node_id:
@@ -594,20 +584,44 @@ class ConversationGraph:
             print(f"Smart-cited {len(matches)} nodes from {from_node_id}")
         return matches
 
-
     def smart_ask(self, query_text, from_node_id=None, top_k=3):
+        """
+        Run a smart-ask by semantically retrieving relevant nodes and generating an LLM answer.
+        This constructs a RAG-style prompt using the top-K semantically similar nodes.
+
+        Args:
+            query_text (str): The user's question.
+            from_node_id (str): The context node initiating the ask.
+            top_k (int): Number of similar nodes to retrieve.
+
+        Returns:
+            str: The LLM-generated answer.
+        """
         matches = self.simsearch(query_text, top_k=top_k)
         context_chunks = []
-        for node_id in matches:
+        citations = []
+
+        for node_id, _score in matches:
             node = self.data.get(node_id, {})
             context = node.get("response") or node.get("prompt")
             if context:
                 label = f"[CONTEXT from {node_id}]"
-                context_chunks.append(f"{label}\n{context.strip()}")
+                context_chunks.append(label + "\n" + context.strip())
+                citations.append(node_id)
 
-        prompt = "\n\n".join(context_chunks)
-        prompt += f"\n\n[QUESTION]\n{query_text.strip()}"
-        return self.ask_llm_with_context(from_node_id, prompt)
+        full_prompt = "\n\n".join(context_chunks)
+        full_prompt += "\n\n[QUESTION]\n" + query_text.strip()
+
+        answer = self.ask_llm_with_context(from_node_id, full_prompt)
+
+        self._last_smart_ask = {
+            "from_node_id": from_node_id,
+            "question": query_text.strip(),
+            "response": answer,
+            "citations": citations,
+        }
+
+        return answer
 
     def promote_smart_ask(self, parent_id: str) -> str:
         """
@@ -627,7 +641,7 @@ class ConversationGraph:
         Raises:
             ValueError: If no smart-ask has been performed yet or if it doesn't match the parent.
         """
-        if not hasattr(self, "_last_smart_ask"):
+        if self._last_smart_ask is None:
             raise ValueError("No smart-ask result available to promote.")
 
         data = self._last_smart_ask

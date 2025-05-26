@@ -19,7 +19,7 @@ def test_smart_ask_mock(graph):
     assert "loop fusion" in prompt.lower()
     assert "question" in prompt.lower()
 
-def test_promote_smart_ask(graph):
+def test_simulated_smart_ask_reply(graph):
     nid = graph.new("Parent")
     child = graph.reply(nid, "What is Halide?")
     graph.data[child]["smart_ask_prompt"] = "Explain Halide"
@@ -45,3 +45,28 @@ def test_cite_smart_ask(graph):
         graph.add_citation(nid, target)
 
     assert len(graph.data[nid]["citations"]) == 3
+
+def test_promote_smart_ask(graph):
+    # Create initial node
+    parent_id = graph.new("Tell me about loop fusion.")
+    graph.data[parent_id]["response"] = "Loop fusion improves memory locality by combining loops."
+    graph.embed_node(parent_id)
+
+    # Run smart_ask
+    answer = graph.smart_ask("What is loop fusion?", from_node_id=parent_id)
+    assert isinstance(answer, str)
+    assert "loop fusion" in answer.lower() or len(answer) > 0
+
+    # Promote to new node
+    new_id = graph.promote_smart_ask(parent_id)
+    assert new_id in graph.data
+
+    new_node = graph.data[new_id]
+    assert new_node["prompt"].strip().lower().startswith("what is loop fusion")
+    assert "response" in new_node and len(new_node["response"]) > 0
+    assert parent_id in graph.data and new_id in graph.data[parent_id]["children"]
+
+    # Validate citations if any
+    if "citations" in new_node:
+        for cited in new_node["citations"]:
+            assert cited in graph.data
