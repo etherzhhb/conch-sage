@@ -35,4 +35,4 @@ def test_simsearch(graph):
     graph.embed_node(b)
     results = graph.simsearch("Halide", top_k=2)
     assert len(results) <= 2
-    assert all(r in graph.data for r in results)
+    assert all(r in graph.data and 0 <= -score for r, score  in results)
