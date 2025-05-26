@@ -8,7 +8,11 @@ DATA_PATH = Path("data/conversations.json")
 SAVE_DIR = Path("data")
 
 class ConversationGraph:
-    def __init__(self):
+    def __init__(self, storage_path=None):
+        if storage_path and storage_path != ":memory:":
+            global DATA_PATH
+            DATA_PATH = Path(storage_path)
+        self.data = self._load()
         self.data = self._load()
 
     def _load(self):
