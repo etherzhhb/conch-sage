@@ -28,21 +28,6 @@ def test_import_doc(graph, tmp_path):
     assert nid in graph.data
     assert "Hello" in graph.data[nid]["response"]
 
-def test_diff_docs(graph, tmp_path):
-    a = graph.new("Design v1")
-    graph.data[a]["response"] = "We use a single thread."
-    b = graph.reply(a, "Revise it")
-    graph.data[b]["response"] = "We use multiple threads."
-
-    path_a = tmp_path / "design_v1.md"
-    path_b = tmp_path / "design_v2.md"
-    graph.save_doc(a, path_a)
-    graph.save_doc(b, path_b)
-
-    diff = graph.diff_docs(a, b)
-    assert "---" in diff and "+++" in diff
-    assert "multiple threads" in diff
-
 def test_import_and_improve_doc(tmp_path):
     graph = ConversationGraph(storage_path=":memory:")
 
@@ -63,3 +48,42 @@ def test_import_and_improve_doc(tmp_path):
     improved_node = graph.data[improved_id]
     assert "prompt" in improved_node and "improved" in improved_node["prompt"].lower()
     assert "response" in improved_node and len(improved_node["response"]) > 0
+
+
+def test_diff_docs_between_nodes(graph, tmp_path):
+    a = graph.new("Design v1")
+    graph.data[a]["response"] = "We use a single thread."
+    b = graph.reply(a, "Revise it")
+    graph.data[b]["response"] = "We use multiple threads."
+
+    path_a = tmp_path / "design_v1.md"
+    path_b = tmp_path / "design_v2.md"
+    graph.save_doc(a, path_a)
+    graph.save_doc(b, path_b)
+
+    diff = graph.diff_docs(a, b)
+    assert "---" in diff and "+++" in diff
+    assert "multiple threads" in diff
+
+def test_diff_docs_with_versioning(tmp_path):
+    graph = ConversationGraph(storage_path=":memory:")
+
+    # Create and save initial version
+    nid = graph.new("Doc V1")
+    graph.data[nid]["response"] = "Version 1 of the doc"
+    file1 = tmp_path / "v1.md"
+    graph.save_doc(nid, file1)
+    graph.save_doc_version(nid, tmp_path)
+
+    # Modify and save second version
+    graph.data[nid]["response"] = "Version 2 of the doc with changes"
+    file2 = tmp_path / "v2.md"
+    graph.save_doc(nid, file2)
+    graph.save_doc_version(nid, tmp_path)
+
+    # Run diff
+    diff_output = graph.diff_doc_versions(nid, tmp_path)
+    assert isinstance(diff_output, str)
+    assert "-Version 1 of the doc" in diff_output
+    assert "+Version 2 of the doc with changes" in diff_output
+

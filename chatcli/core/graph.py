@@ -475,23 +475,37 @@ class ConversationGraph:
         Path(output_path).write_text(content)
         return output_path
 
-    def save_doc_version(self, node_id, folder="docs"):
-        import subprocess
+    def save_doc_version(self, node_id, repo_path):
+        """
+        Save the response of the given node to a Markdown file and commit it to a Git repository.
+
+        If the target directory is not already a Git repository, it will be initialized.
+        The filename is derived from the node ID and ends in '.md'.
+
+        Args:
+            node_id (str): ID of the node to save.
+            repo_path (str or Path): Path to the Git repository directory.
+        """
         from pathlib import Path
-        if node_id not in self.data:
-            raise ValueError("Node ID not found")
-        node = self.data[node_id]
-        filename = f"{node_id}_{node.get('filename', 'doc.md')}"
-        path = Path(folder)
-        path.mkdir(parents=True, exist_ok=True)
-        filepath = path / filename
-        filepath.write_text(node["response"])
+        import subprocess
 
-        subprocess.run(["git", "add", str(filepath)], check=True)
-        commit_msg = f"Doc version {filename} from node {node_id}"
-        subprocess.run(["git", "commit", "-m", commit_msg], check=True)
+        repo_path = Path(repo_path)
+        filepath = repo_path / f"{node_id}_doc.md"
+        content = self.data[node_id]["response"]
 
-        return str(filepath)
+        filepath.write_text(content, encoding="utf-8")
+
+        # Initialize Git repo if needed
+        if not (repo_path / ".git").exists():
+            subprocess.run(["git", "init"], cwd=repo_path, check=True)
+
+        # Add and commit the file
+        subprocess.run(["git", "add", str(filepath.name)], cwd=repo_path, check=True)
+        subprocess.run(
+            ["git", "commit", "-m", f"Save version of {filepath.name}"],
+            cwd=repo_path,
+            check=True
+        )
 
     def diff_docs(self, node1_id, node2_id):
         import subprocess
@@ -505,6 +519,39 @@ class ConversationGraph:
             f1_path, f2_path = f1.name, f2.name
 
         result = subprocess.run(["git", "diff", "--no-index", f1_path, f2_path], capture_output=True, text=True)
+        return result.stdout.strip()
+
+    def diff_doc_versions(self, node_id, repo_path):
+        """
+        Diff the last two Git-committed versions of the document corresponding to node_id.
+        Returns a unified diff string.
+        """
+        import subprocess
+        from pathlib import Path
+
+        repo_path = Path(repo_path)
+        filepath = f"{node_id}_doc.md"
+
+        # Ensure repo exists
+        if not (repo_path / ".git").exists():
+            raise RuntimeError(f"{repo_path} is not a Git repository")
+
+        # Run git log to get the last two commits for the file
+        result = subprocess.run(
+            ["git", "-C", str(repo_path), "log", "-n", "2", "--pretty=format:%H", "--", filepath],
+            capture_output=True, text=True, check=True
+        )
+        commits = result.stdout.strip().splitlines()
+        if len(commits) < 2:
+            raise RuntimeError("Not enough commits to perform diff")
+
+        rev1, rev2 = commits[1], commits[0]  # earlier → later
+
+        # Run the diff between two versions
+        result = subprocess.run(
+            ["git", "-C", str(repo_path), "diff", rev1, rev2, "--", filepath],
+            capture_output=True, text=True, check=True
+        )
         return result.stdout.strip()
 
     def get_inline_diff(self, node_id):
