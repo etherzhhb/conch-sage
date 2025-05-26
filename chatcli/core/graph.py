@@ -16,7 +16,6 @@ class ConversationGraph:
             global DATA_PATH
             DATA_PATH = Path(storage_path)
         self.data = self._load()
-        self.data = self._load()
 
     def _load(self):
         if not DATA_PATH.exists():
