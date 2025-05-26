@@ -186,3 +186,11 @@ class ChatCLIShell(cmd.Cmd):
             print(suggestions.strip())
         except Exception as e:
             print(f"Error: {e}")
+
+    def do_suggest_tags(self, arg):
+        try:
+            suggestions = self.graph.suggest_tags(self.current_id)
+            print("[Tag Suggestions]")
+            print(suggestions)
+        except Exception as e:
+            print(f"Error: {e}")
