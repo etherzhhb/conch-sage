@@ -197,7 +197,7 @@ class ConversationGraph:
             self.data[from_node_id]["citations"].append(to_node_id)
         config = load_config()
         if config.get("auto_embed", False):
-            self.embed_node(node_id, dry_run=dry_run_embedding)
+            self.embed_node(from_node_id, dry_run=dry_run_embedding)
         self._save()
 
     def get_citations(self, node_id):
