@@ -498,6 +498,8 @@ class ConversationGraph:
         # Initialize Git repo if needed
         if not (repo_path / ".git").exists():
             subprocess.run(["git", "init"], cwd=repo_path, check=True)
+            subprocess.run(["git", "config", "user.email", "ai@ai.ai"], cwd=repo_path, check=True)
+            subprocess.run(["git", "config", "user.name", "AI"], cwd=repo_path, check=True)
 
         # Add and commit the file
         subprocess.run(["git", "add", str(filepath.name)], cwd=repo_path, check=True)
