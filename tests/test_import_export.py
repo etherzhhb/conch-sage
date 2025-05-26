@@ -29,19 +29,22 @@ def test_export_and_import_graph():
 
 
 def test_export_file_created(tmp_path):
-    graph = ConversationGraph()
+    # Set up a graph with a custom storage path to control export dir
+    storage_path = tmp_path / "conversations.json"
+    graph = ConversationGraph(storage_path=storage_path)
+
     nid = graph.new("Test export")
     graph.data[nid]["response"] = "Exported node."
 
     filename = "export_test.json"
     graph.export_to_file(filename)
 
-    path = graph.SAVE_DIR / filename
+    path = graph._save_dir / filename  # use instance-level path
     assert path.exists()
+
     with open(path) as f:
         content = f.read()
         assert "Exported node." in content
-
 
 def test_import_from_missing_file(capsys):
     graph = ConversationGraph()

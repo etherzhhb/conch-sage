@@ -7,17 +7,18 @@ import json
 import numpy as np
 import faiss
 
-DATA_PATH = Path("data/conversations.json")
-SAVE_DIR = Path("data")
-
 
 class ConversationGraph:
+
     def __init__(self, storage_path=None):
         if storage_path and storage_path != ":memory:":
-            self._path = Path(storage_path)
+            path = Path(storage_path)
+            self._path = path
+            self._save_dir = path.parent
             self.data, self._last_smart_ask = self._load(self._path)
         else:
             self._path = None
+            self._save_dir = Path("data")
             self.data = {}
             self._last_smart_ask = None
 
@@ -29,8 +30,10 @@ class ConversationGraph:
             return obj.get("nodes", {}), obj.get("last_smart_ask", None)
 
     def _save(self):
-        os.makedirs(os.path.dirname(DATA_PATH), exist_ok=True)
-        with open(DATA_PATH, "w") as f:
+        if self._path is None:
+            return
+        os.makedirs(self._path.parent, exist_ok=True)
+        with open(self._path, "w") as f:
             json.dump({
                 "nodes": self.data,
                 "last_smart_ask": self._last_smart_ask
@@ -132,9 +135,9 @@ class ConversationGraph:
         Export the full conversation graph to a JSON file, including smart-ask context.
 
         Args:
-            filename (str): Name of the file to save to (relative to SAVE_DIR).
+            filename (str): Name of the file to save to (relative to export directory).
         """
-        filepath = SAVE_DIR / filename
+        filepath = self._save_dir / filename
         with open(filepath, "w") as f:
             json.dump({
                 "nodes": self.data,
@@ -147,12 +150,12 @@ class ConversationGraph:
         Import a full conversation graph (including smart-ask context) from a JSON file.
 
         Args:
-            filename (str): File name relative to SAVE_DIR to import from.
+            filename (str): File name relative to the export directory.
             dry_run_embedding (bool): If True, skip actual embedding.
         """
-        filepath = SAVE_DIR / filename
+        filepath = self._save_dir / filename
         if not filepath.exists():
-            print(f"File {filename} not found in {SAVE_DIR}")
+            print(f"File {filename} not found in {self._save_dir}")
             return
 
         with open(filepath, "r") as f:
@@ -169,7 +172,13 @@ class ConversationGraph:
         print(f"Imported full graph from {filepath}")
 
     def list_saved_files(self):
-        return [f.name for f in SAVE_DIR.glob("*.json")]
+        """
+        List all saved JSON files in the configured save directory.
+
+        Returns:
+            list of str: Filenames of saved conversation graphs.
+        """
+        return [f.name for f in self._save_dir.glob("*.json")]
 
     def add_tag(self, node_id, tag, dry_run_embedding=False):
         if node_id not in self.data:
