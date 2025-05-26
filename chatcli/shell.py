@@ -36,6 +36,20 @@ class ChatCLIShell:
         cmd = parts[0].lower()
         arg = parts[1] if len(parts) > 1 else ""
 
+
+    def do_simsearch(self, line):
+        """simsearch <query> -- perform a semantic search"""
+        query = line.strip()
+        if not query:
+            print("Usage: simsearch <query>")
+            return
+        results = self.graph.simsearch(query)
+        if not results:
+            print("No similar nodes found.")
+            return
+        for node_id, score in results:
+            prompt = self.graph.data[node_id].get('prompt', '')
+            print(f"{node_id[:8]}  {score:.2f}  {prompt[:60]}")
         if cmd == "exit":
             return False
         elif cmd == "new":
