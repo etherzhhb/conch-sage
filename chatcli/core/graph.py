@@ -847,3 +847,19 @@ class ConversationGraph:
         print(f"[LLM] Using {provider}: {model}")
         reply = self.ask_llm_with_context(node_id, prompt)
         return reply
+
+    def suggest_tags(self, node_id):
+        node = self.data.get(node_id)
+        if not node:
+            raise ValueError("Node not found")
+
+        prompt = (
+            f"Suggest 3 to 5 useful tags for organizing the following content:\n\n"
+            f"{node.get('prompt', '')}\n\n{node.get('response', '')}"
+        )
+        config = load_config()
+        provider = config["provider"]
+        model = config.get("openai_chat_model") if provider == "openai" else config.get("bedrock_model")
+        print(f"[LLM] Using {provider}: {model}")
+        tags_text = self.ask_llm_with_context(node_id, prompt)
+        return tags_text.strip()

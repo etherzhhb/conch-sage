@@ -56,3 +56,10 @@ def test_suggest_replies(shell, capsys):
     shell.onecmd("suggest_replies")
     out = capsys.readouterr().out
     assert "Suggestions" in out
+
+def test_suggest_tags(shell, capsys):
+    shell.onecmd("new Explain async GPU compute.")
+    shell.graph.data[shell.current_id]["response"] = "Async GPU compute overlaps data transfers and kernel execution."
+    shell.onecmd("suggest_tags")
+    out = capsys.readouterr().out
+    assert "Tag Suggestions" in out
