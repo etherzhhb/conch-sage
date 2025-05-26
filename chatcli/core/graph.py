@@ -44,6 +44,10 @@ class ConversationGraph:
         self._save()
         return node_id
 
+    def new(self, prompt):
+        """Alias for new_thread(), used by CLI and tests"""
+        return self.new_thread(prompt)
+
     def reply(self, parent_id, prompt):
         if parent_id not in self.data:
             raise ValueError("Parent ID not found")
