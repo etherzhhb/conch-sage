@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import pytest
 import tempfile
@@ -8,10 +9,11 @@ from chatcli.core.graph import ConversationGraph
 
 def test_export_and_import_graph():
     with tempfile.TemporaryDirectory() as tmpdir:
-        path = os.path.join(tmpdir, "test_graph.json")
+        tmp_path = Path(tmpdir)
+        storage_path = tmp_path / "graph.json"
 
         # Export a graph with a smart-ask
-        g1 = ConversationGraph()
+        g1 = ConversationGraph(storage_path=storage_path)
         root = g1.new("What is loop fusion?")
         g1.data[root]["response"] = "Loop fusion combines loops."
         g1.embed_node(root)
@@ -19,7 +21,7 @@ def test_export_and_import_graph():
         g1.export_to_file("test_graph.json")
 
         # Import into a new graph
-        g2 = ConversationGraph()
+        g2 = ConversationGraph(storage_path=storage_path)
         g2.import_from_file("test_graph.json")
 
         assert len(g2.data) == len(g1.data)
