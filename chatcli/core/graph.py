@@ -520,9 +520,6 @@ class ConversationGraph:
             print(f"[DRY RUN] Would embed node {node_id}")
         else:
             node["embedding"] = self.get_embedding(combined)
-        config = load_config()
-        if config.get("auto_embed", False):
-            self.embed_node(node_id, dry_run=dry_run)
         self._save()
         print(f"Embedded node {node_id}")
 
