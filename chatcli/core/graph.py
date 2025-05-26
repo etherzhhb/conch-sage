@@ -127,24 +127,46 @@ class ConversationGraph:
             self.embed_node(node_id, dry_run=dry_run_embedding)
         self._save()
 
-    def save_to_file(self, filename):
+    def export_to_file(self, filename):
+        """
+        Export the full conversation graph to a JSON file, including smart-ask context.
+
+        Args:
+            filename (str): Name of the file to save to (relative to SAVE_DIR).
+        """
         filepath = SAVE_DIR / filename
         with open(filepath, "w") as f:
-            json.dump(self.data, f, indent=2)
-        print(f"Saved to {filepath}")
+            json.dump({
+                "nodes": self.data,
+                "last_smart_ask": self._last_smart_ask
+            }, f, indent=2)
+        print(f"Exported full graph to {filepath}")
 
-    def load_from_file(self, filename, dry_run_embedding=False):
+    def import_from_file(self, filename, dry_run_embedding=False):
+        """
+        Import a full conversation graph (including smart-ask context) from a JSON file.
+
+        Args:
+            filename (str): File name relative to SAVE_DIR to import from.
+            dry_run_embedding (bool): If True, skip actual embedding.
+        """
         filepath = SAVE_DIR / filename
         if not filepath.exists():
             print(f"File {filename} not found in {SAVE_DIR}")
             return
+
         with open(filepath, "r") as f:
-            self.data = json.load(f)
+            obj = json.load(f)
+            self.data = obj.get("nodes", {})
+            self._last_smart_ask = obj.get("last_smart_ask", None)
+
         config = load_config()
         if config.get("auto_embed", False):
-            self.embed_node(node_id, dry_run=dry_run_embedding)
+            for node_id in self.data:
+                self.embed_node(node_id, dry_run=dry_run_embedding)
+
         self._save()
-        print(f"Loaded from {filepath}")
+        print(f"Imported full graph from {filepath}")
 
     def list_saved_files(self):
         return [f.name for f in SAVE_DIR.glob("*.json")]
