@@ -1,11 +1,20 @@
+import sys
+
 import pytest
+from unittest.mock import patch, MagicMock
 from chatcli.shell import ChatCLIShell
 
 @pytest.fixture
 def shell():
-    sh = ChatCLIShell()
-    sh.graph.storage_path = ":memory:"
-    return sh
+    with patch("chatcli.shell.PromptSession") as MockSession:
+        # Mock the PromptSession instance
+        mock_session = MagicMock()
+        MockSession.return_value = mock_session
+
+        # Initialize ChatCLIShell with the mocked PromptSession
+        sh = ChatCLIShell()
+        sh.graph.storage_path = ":memory:"
+        return sh
 
 def test_new_reply_view(shell, capsys):
     shell.onecmd("new What is Halide?")
@@ -31,5 +40,5 @@ def test_smart_ask_and_promote(shell, capsys):
 
 def test_invalid_command(shell, capsys):
     shell.onecmd("foobar invalid command")
-    err = capsys.readouterr().err
-    assert "Unknown syntax: foobar invalid command" in err
+    out = capsys.readouterr().out
+    assert "Unknown syntax: foobar invalid command" in out
