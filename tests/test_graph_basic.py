@@ -14,7 +14,7 @@ def test_reply_node(graph):
     root = graph.new("Tell me about scheduling.")
     child = graph.reply(root, "Explain it")
     assert child in graph.data
-    assert graph.data[child]["parent"] == root
+    assert graph.data[child]["parent_id"] == root
     assert child in graph.data[root]["children"]
 
 def test_get_embedding_mock(graph):
