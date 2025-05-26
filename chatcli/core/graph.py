@@ -3,6 +3,7 @@ import uuid
 from pathlib import Path
 import json
 import numpy as np
+import faiss
 
 DATA_PATH = Path("data/conversations.json")
 SAVE_DIR = Path("data")
@@ -28,7 +29,7 @@ class ConversationGraph:
     def _generate_id(self):
         return str(uuid.uuid4())[:8]
 
-    def new_thread(self, prompt):
+    def new_thread(self, prompt, dry_run_embedding=False):
         node_id = self._generate_id()
         self.data[node_id] = {
             "id": node_id,
@@ -40,7 +41,7 @@ class ConversationGraph:
         }
         config = load_config()
         if config.get("auto_embed", False):
-            self.embed_node(node_id, dry_run=dry_run)
+            self.embed_node(node_id, dry_run=dry_run_embedding)
         self._save()
         return node_id
 
@@ -48,7 +49,7 @@ class ConversationGraph:
         """Alias for new_thread(), used by CLI and tests"""
         return self.new_thread(prompt)
 
-    def reply(self, parent_id, prompt):
+    def reply(self, parent_id, prompt, dry_run_embedding=False):
         if parent_id not in self.data:
             raise ValueError("Parent ID not found")
 
@@ -64,7 +65,7 @@ class ConversationGraph:
         self.data[parent_id]["children"].append(node_id)
         config = load_config()
         if config.get("auto_embed", False):
-            self.embed_node(node_id, dry_run=dry_run)
+            self.embed_node(node_id, dry_run=dry_run_embedding)
         self._save()
         return node_id
 
@@ -85,25 +86,25 @@ class ConversationGraph:
         for child_id in node["children"]:
             self.print_tree(child_id, indent + 2)
 
-    def edit_response(self, node_id, new_response):
+    def edit_response(self, node_id, new_response, dry_run_embedding=False):
         if node_id not in self.data:
             raise ValueError("Node ID not found")
         self.data[node_id]["response"] = new_response
         config = load_config()
         if config.get("auto_embed", False):
-            self.embed_node(node_id, dry_run=dry_run)
+            self.embed_node(node_id, dry_run=dry_run_embedding)
         self._save()
 
-    def add_comment(self, node_id, comment):
+    def add_comment(self, node_id, comment, dry_run_embedding=False):
         if node_id not in self.data:
             raise ValueError("Node ID not found")
         self.data[node_id]["comment"] = comment
         config = load_config()
         if config.get("auto_embed", False):
-            self.embed_node(node_id, dry_run=dry_run)
+            self.embed_node(node_id, dry_run=dry_run_embedding)
         self._save()
 
-    def retry(self, node_id, new_prompt=None):
+    def retry(self, node_id, new_prompt=None, dry_run_embedding=False):
         if node_id not in self.data:
             raise ValueError("Node ID not found")
         prompt = new_prompt if new_prompt else self.data[node_id]["prompt"]
@@ -112,7 +113,7 @@ class ConversationGraph:
             self.data[node_id]["prompt"] = new_prompt
         config = load_config()
         if config.get("auto_embed", False):
-            self.embed_node(node_id, dry_run=dry_run)
+            self.embed_node(node_id, dry_run=dry_run_embedding)
         self._save()
 
     def save_to_file(self, filename):
@@ -121,7 +122,7 @@ class ConversationGraph:
             json.dump(self.data, f, indent=2)
         print(f"Saved to {filepath}")
 
-    def load_from_file(self, filename):
+    def load_from_file(self, filename, dry_run_embedding=False):
         filepath = SAVE_DIR / filename
         if not filepath.exists():
             print(f"File {filename} not found in {SAVE_DIR}")
@@ -130,14 +131,14 @@ class ConversationGraph:
             self.data = json.load(f)
         config = load_config()
         if config.get("auto_embed", False):
-            self.embed_node(node_id, dry_run=dry_run)
+            self.embed_node(node_id, dry_run=dry_run_embedding)
         self._save()
         print(f"Loaded from {filepath}")
 
     def list_saved_files(self):
         return [f.name for f in SAVE_DIR.glob("*.json")]
 
-    def add_tag(self, node_id, tag):
+    def add_tag(self, node_id, tag, dry_run_embedding=False):
         if node_id not in self.data:
             raise ValueError("Node ID not found")
         if "tags" not in self.data[node_id]:
@@ -146,17 +147,17 @@ class ConversationGraph:
             self.data[node_id]["tags"].append(tag)
         config = load_config()
         if config.get("auto_embed", False):
-            self.embed_node(node_id, dry_run=dry_run)
+            self.embed_node(node_id, dry_run=dry_run_embedding)
         self._save()
 
-    def remove_tag(self, node_id, tag):
+    def remove_tag(self, node_id, tag, dry_run_embedding=False):
         if node_id not in self.data:
             raise ValueError("Node ID not found")
         if "tags" in self.data[node_id] and tag in self.data[node_id]["tags"]:
             self.data[node_id]["tags"].remove(tag)
         config = load_config()
         if config.get("auto_embed", False):
-            self.embed_node(node_id, dry_run=dry_run)
+            self.embed_node(node_id, dry_run=dry_run_embedding)
         self._save()
 
     def list_tags(self, node_id):
@@ -165,7 +166,7 @@ class ConversationGraph:
         return self.data[node_id].get("tags", [])
 
 
-    def summarize_subtree(self, node_id):
+    def summarize_subtree(self, node_id, dry_run_embedding=False):
         if node_id not in self.data:
             raise ValueError("Node ID not found")
 
@@ -181,12 +182,12 @@ class ConversationGraph:
         self.data[node_id]["subtree_summary"] = summary
         config = load_config()
         if config.get("auto_embed", False):
-            self.embed_node(node_id, dry_run=dry_run)
+            self.embed_node(node_id, dry_run=dry_run_embedding)
         self._save()
         return summary
 
 
-    def add_citation(self, from_node_id, to_node_id):
+    def add_citation(self, from_node_id, to_node_id, dry_run_embedding=False):
         if from_node_id not in self.data or to_node_id not in self.data:
             raise ValueError("Invalid node ID(s)")
         self.data[from_node_id].setdefault("citations", [])
@@ -194,7 +195,7 @@ class ConversationGraph:
             self.data[from_node_id]["citations"].append(to_node_id)
         config = load_config()
         if config.get("auto_embed", False):
-            self.embed_node(node_id, dry_run=dry_run)
+            self.embed_node(node_id, dry_run=dry_run_embedding)
         self._save()
 
     def get_citations(self, node_id):
@@ -273,7 +274,7 @@ class ConversationGraph:
         ]
 
 
-    def save_web_result(self, result, current_id=None):
+    def save_web_result(self, result, current_id=None, dry_run_embedding=False):
         node_id = self._generate_id()
         self.data[node_id] = {
             "id": node_id,
@@ -290,7 +291,7 @@ class ConversationGraph:
             self.data[current_id]["children"].append(node_id)
         config = load_config()
         if config.get("auto_embed", False):
-            self.embed_node(node_id, dry_run=dry_run)
+            self.embed_node(node_id, dry_run=dry_run_embedding)
         self._save()
         return node_id
 
@@ -339,7 +340,7 @@ class ConversationGraph:
         return "[SUMMARY] " + text[:max_length] + "..."
 
 
-    def import_doc(self, filepath, current_id=None):
+    def import_doc(self, filepath, current_id=None, dry_run_embedding=False):
         from pathlib import Path
         path = Path(filepath)
         if not path.exists():
@@ -360,11 +361,11 @@ class ConversationGraph:
             self.data[current_id]["children"].append(node_id)
         config = load_config()
         if config.get("auto_embed", False):
-            self.embed_node(node_id, dry_run=dry_run)
+            self.embed_node(node_id, dry_run=dry_run_embedding)
         self._save()
         return node_id
 
-    def improve_doc(self, node_id):
+    def improve_doc(self, node_id, dry_run_embedding=False):
         if node_id not in self.data:
             raise ValueError("Node ID not found")
         original = self.data[node_id]
@@ -383,7 +384,7 @@ class ConversationGraph:
         self.data[node_id]["children"].append(new_id)
         config = load_config()
         if config.get("auto_embed", False):
-            self.embed_node(node_id, dry_run=dry_run)
+            self.embed_node(node_id, dry_run=dry_run_embedding)
         self._save()
         return new_id
 
@@ -534,10 +535,6 @@ class ConversationGraph:
             self.embed_node(nid)
             stack.extend(self.data[nid].get("children", []))
         print(f"Embedded subtree rooted at {root_id}")
-
-
-    import numpy as np
-    import faiss
 
     def simsearch(self, query_text, top_k=3):
         query_vector = self.get_embedding(query_text)
