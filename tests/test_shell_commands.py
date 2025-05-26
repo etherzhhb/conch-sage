@@ -42,3 +42,10 @@ def test_invalid_command(shell, capsys):
     shell.onecmd("foobar invalid command")
     out = capsys.readouterr().out
     assert "Unknown syntax: foobar invalid command" in out
+
+def test_suggest_replies(shell, capsys):
+    shell.onecmd("new What is loop fusion?")
+    shell.graph.data[shell.current_id]["response"] = "Loop fusion merges multiple loops to reduce overhead."
+    shell.onecmd("suggest_replies")
+    out = capsys.readouterr().out
+    assert "Suggestions" in out

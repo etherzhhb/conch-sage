@@ -831,3 +831,19 @@ class ConversationGraph:
 
         dfs(node_id)
         return result
+
+    def suggest_replies(self, node_id, top_k=3):
+        node = self.data.get(node_id)
+        if not node:
+            raise ValueError("Node not found")
+        context = node.get("response") or node.get("prompt")
+        prompt = (
+            f"Based on the following conversation:\n\n{context.strip()}\n\n"
+            f"Suggest {top_k} relevant follow-up questions."
+        )
+        config = load_config()
+        provider = config["provider"]
+        model = config.get("openai_chat_model") if provider == "openai" else config.get("bedrock_model")
+        print(f"[LLM] Using {provider}: {model}")
+        reply = self.ask_llm_with_context(node_id, prompt)
+        return reply

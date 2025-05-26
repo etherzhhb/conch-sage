@@ -38,6 +38,7 @@ class ChatCLIShell(cmd.Cmd):
             except (EOFError, KeyboardInterrupt):
                 print()
                 break
+
     def default(self, line):
         print(f"*** Unknown syntax: {line}")
 
@@ -163,3 +164,11 @@ class ChatCLIShell(cmd.Cmd):
         new_id = self.graph.promote_smart_ask(self.current_id)
         self.current_id = new_id
         print(f"Promoted to new node {new_id}")
+
+    def do_suggest_replies(self, arg):
+        try:
+            suggestions = self.graph.suggest_replies(self.current_id)
+            print("[Suggestions]")
+            print(suggestions.strip())
+        except Exception as e:
+            print(f"Error: {e}")
