@@ -10,13 +10,13 @@
 
 ### Core Modules
 
-| Module           | Purpose |
-|------------------|---------|
-| `graph.py`       | Manages DAG of nodes, citations, metadata |
-| `shell.py`       | Interactive REPL with `cmd` and prompt_toolkit |
-| `main.py`        | CLI launcher (`conch-sage`) |
-| `web.py` (mock)  | Mock Tavily-style web results |
-| `faiss` backend  | Embedding + semantic search index |
+| Module          | Purpose                                        |
+|-----------------|------------------------------------------------|
+| `graph.py`      | Manages DAG of nodes, citations, metadata      |
+| `shell.py`      | Interactive REPL with `cmd` and prompt_toolkit |
+| `main.py`       | CLI launcher (`conch-sage`)                    |
+| `web.py` (mock) | Mock Tavily-style web results                  |
+| `faiss` backend | Embedding + semantic search index              |
 
 ---
 
@@ -93,3 +93,17 @@
 ## Summary
 
 Conch Sage is a powerful, structured research environment in terminal form. It blends semantic memory, reproducibility, and prompt engineering into a usable tool for anyone working deeply with ideas.
+
+### 🔁 Citation Edge Semantics (📎)
+
+- `add_citation(from_node_id, to_node_id)` adds a **directed edge** representing:  
+  “**from_node** references or depends on **to_node**.”
+
+- Citation edges are stored in `from_node["citations"]`.
+
+- This reflects RAG-style flows, where one node builds on or synthesizes others.
+
+- When `auto_embed` is enabled, `from_node` is **re-embedded** to reflect the updated semantic context (now referencing `to_node`).
+
+- `to_node` is left unchanged — it remains static as the source being cited.
+- 
