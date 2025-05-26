@@ -25,20 +25,6 @@ class ChatCLIShell(cmd.Cmd):
             completer=WordCompleter(COMMANDS, ignore_case=True),
         )
 
-    def cmdloop(self, intro=None):
-        print("Welcome to Conch Sage. Type 'exit' to quit.")
-        while True:
-            try:
-                line = self.session.prompt(self.prompt)
-                if not line.strip():
-                    continue
-                stop = self.onecmd(line)
-                if stop:
-                    break
-            except (EOFError, KeyboardInterrupt):
-                print()
-                break
-
     def default(self, line):
         print(f"*** Unknown syntax: {line}")
 
