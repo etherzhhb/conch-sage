@@ -38,6 +38,13 @@ def test_smart_ask_and_promote(shell, capsys):
     out = capsys.readouterr().out
     assert "Promoted to new node" in out
 
+def test_smart_ask_with_promote(shell, capsys):
+    shell.onecmd("new What is vectorization?")
+    shell.graph.data[shell.current_id]["response"] = "Vectorization improves data throughput."
+    shell.onecmd("smart_ask What is SIMD? --promote")
+    out = capsys.readouterr().out
+    assert "Promoted to new node" in out
+
 def test_invalid_command(shell, capsys):
     shell.onecmd("foobar invalid command")
     out = capsys.readouterr().out

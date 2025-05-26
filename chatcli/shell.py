@@ -158,7 +158,21 @@ class ChatCLIShell(cmd.Cmd):
         print(self.graph.ask_llm_with_context(self.current_id, arg))
 
     def do_smart_ask(self, arg):
-        print(self.graph.smart_ask(arg, from_node_id=self.current_id))
+        parts = arg.strip().split()
+        promote = "--promote" in parts
+        parts = [p for p in parts if p != "--promote"]
+        question = " ".join(parts)
+        if not question:
+            print("Usage: smart_ask <question> [--promote]")
+            return
+
+        result = self.graph.smart_ask(question, from_node_id=self.current_id)
+        print(result)
+
+        if promote:
+            new_id = self.graph.promote_smart_ask(self.current_id)
+            self.current_id = new_id
+            print(f"Promoted to new node {new_id}")
 
     def do_promote_smart_ask(self, arg):
         new_id = self.graph.promote_smart_ask(self.current_id)
