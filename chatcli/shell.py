@@ -6,8 +6,8 @@ from chatcli.core.graph import ConversationGraph
 
 COMMANDS = [
     "new", "reply", "view", "tree", "import", "improve", "save", "websearch",
-    "saveurl", "citeurl", "ask", "embed-summary", "embed-node",
-    "embed-all", "embed-subtree", "simsearch", "exit"
+    "saveurl", "citeurl", "ask", "embed_summary", "embed_node", "embed_all",
+    "embed_subtree", "simsearch", "smart_ask", "promote_smart_ask", "exit"
 ]
 
 class ChatCLIShell(cmd.Cmd):
@@ -24,7 +24,7 @@ class ChatCLIShell(cmd.Cmd):
         )
 
     def cmdloop(self):
-        print("Welcome to chatcli shell. Type 'exit' to quit.")
+        print("Welcome to Conch Sage. Type 'exit' to quit.")
         while True:
             try:
                 line = self.session.prompt(self.prompt)
@@ -32,6 +32,7 @@ class ChatCLIShell(cmd.Cmd):
                     continue
                 self.onecmd(line)
             except (EOFError, KeyboardInterrupt):
+                print()
                 break
 
     def do_exit(self, arg):
@@ -110,7 +111,9 @@ class ChatCLIShell(cmd.Cmd):
 
     def do_embed_node(self, arg):
         try:
-            self.graph.embed_node(arg.replace("--dry-run", "").strip() or self.current_id, "--dry-run" in arg)
+            dry_run = "--dry-run" in arg
+            node_id = arg.replace("--dry-run", "").strip() or self.current_id
+            self.graph.embed_node(node_id, dry_run=dry_run)
         except Exception as e:
             print(f"Embed failed: {e}")
 
@@ -122,15 +125,11 @@ class ChatCLIShell(cmd.Cmd):
 
     def do_embed_subtree(self, arg):
         try:
-            self.graph.embed_subtree(arg.replace("--dry-run", "").strip() or self.current_id, "--dry-run" in arg)
+            dry_run = "--dry-run" in arg
+            node_id = arg.replace("--dry-run", "").strip() or self.current_id
+            self.graph.embed_subtree(node_id, dry_run=dry_run)
         except Exception as e:
             print(f"Embed subtree failed: {e}")
-
-    def do_ask(self, arg):
-        if not self.current_id:
-            print("No current node.")
-            return
-        print(self.graph.ask_llm_with_context(self.current_id, arg))
 
     def do_simsearch(self, arg):
         query = arg.strip()
@@ -141,6 +140,24 @@ class ChatCLIShell(cmd.Cmd):
         if not results:
             print("No similar nodes found.")
             return
-        for node_id, score in results:
+        for r in results:
+            if isinstance(r, tuple):
+                node_id, score = r
+            else:
+                node_id, score = r, 0.0
             prompt = self.graph.data[node_id].get('prompt', '')
             print(f"{node_id[:8]}  {score:.2f}  {prompt[:60]}")
+
+    def do_ask(self, arg):
+        if not self.current_id:
+            print("No current node.")
+            return
+        print(self.graph.ask_llm_with_context(self.current_id, arg))
+
+    def do_smart_ask(self, arg):
+        print(self.graph.smart_ask(self.current_id, arg))
+
+    def do_promote_smart_ask(self, arg):
+        new_id = self.graph.promote_smart_ask(self.current_id)
+        self.current_id = new_id
+        print(f"Promoted to new node {new_id}")

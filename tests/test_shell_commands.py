@@ -16,7 +16,7 @@ def test_new_reply_view(shell, capsys):
 
 def test_embed_node_and_simsearch(shell, capsys):
     shell.onecmd("new Explain loop fusion.")
-    shell.onecmd("embed-node")
+    shell.onecmd("embed_node")
     shell.onecmd("simsearch fusion")
     out = capsys.readouterr().out
     assert "fusion" in out.lower()
@@ -24,8 +24,8 @@ def test_embed_node_and_simsearch(shell, capsys):
 def test_smart_ask_and_promote(shell, capsys):
     shell.onecmd("new Tell me about vectorization.")
     shell.graph.data[shell.current_id]["response"] = "Vectorization speeds up code."
-    shell.onecmd("smart-ask What is vectorization?")
-    shell.onecmd("promote-smart-ask")
+    shell.onecmd("smart_ask What is vectorization?")
+    shell.onecmd("promote_smart_ask")
     out = capsys.readouterr().out
     assert "Promoted to new node" in out
 
