@@ -26,7 +26,7 @@ def test_import_doc(graph, tmp_path):
     sample_path.write_text("# Hello\nThis is a test document.")
     nid = graph.import_doc(str(sample_path))
     assert nid in graph.data
-    assert "Hello" in graph.data[nid]["prompt"]
+    assert "Hello" in graph.data[nid]["response"]
 
 def test_diff_docs(graph, tmp_path):
     a = graph.new("Design v1")
