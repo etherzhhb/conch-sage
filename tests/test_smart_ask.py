@@ -63,6 +63,8 @@ def test_promote_smart_ask(graph):
     assert "response" in new_node and len(new_node["response"]) > 0
     assert parent_id in graph.data and new_id in graph.data[parent_id]["children"]
 
+    assert new_node["response"] == answer
+
     # Validate citations if any
     if "citations" in new_node:
         for cited in new_node["citations"]:

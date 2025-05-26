@@ -318,10 +318,11 @@ class ConversationGraph:
                 lines.append(f"{node_id} --> {child_id}")
             for cited_id in node.get("citations", []):
                 lines.append(f"{node_id} -.-> {cited_id}")
-        filepath = Path("data") / filename
+        filepath = self._save_dir / filename
+        filepath.parent.mkdir(parents=True, exist_ok=True)
         with open(filepath, "w") as f:
             f.write("\n".join(lines))
-        print(f"Exported to Mermaid format: {filepath}")
+        print(f"Exported graph to {filepath}")
 
     def search(self, query):
         query_lower = query.lower()

@@ -40,3 +40,33 @@ def test_import_partial_graph(tmp_path):
     g = ConversationGraph(storage_path=":memory:")  # don't load from broken file
     g.import_from_file(str(path))  # should fail gracefully
     assert g.data == {}
+
+def test_citation_filters(graph):
+    a = graph.new("A")
+    b = graph.reply(a, "B")
+    c = graph.reply(b, "C")
+
+    graph.add_citation(b, a)  # B cites A
+    graph.add_citation(c, b)  # C cites B
+
+    assert graph.filter_cites(b) == [a]
+    assert graph.filter_cited_by(b) == [c]
+
+    related_to_b = graph.filter_related(b)
+    assert set(related_to_b) == {a, c}
+
+def test_describe_and_preview_nodes(graph):
+    root = graph.new("Root prompt")
+    child = graph.reply(root, "Child prompt")
+    graph.data[child]["response"] = "Some response text."
+
+    # Test describe_nodes
+    descriptions = graph.describe_nodes([root, child])
+    assert len(descriptions) == 2
+    assert descriptions[0].startswith(f"[{root}]")
+    assert descriptions[1].startswith(f"[{child}]")
+
+    # Test preview_node
+    preview = graph.preview_node(child)
+    assert preview.startswith(f"[{child}]")
+    assert "Child prompt" in preview

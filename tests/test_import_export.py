@@ -73,3 +73,21 @@ def test_import_from_invalid_format(tmp_path, capsys):
 
     graph.import_from_file(filepath.name)
     assert graph.data == {}
+
+def test_export_mermaid(tmp_path):
+    graph = ConversationGraph(storage_path=":memory:")
+    root = graph.new("Mermaid Root")
+    child = graph.reply(root, "Mermaid Child")
+    graph.add_citation(child, root)
+
+    filename = "test_mermaid.mmd"
+    graph._save_dir = tmp_path  # override save directory for testing
+    graph.export_mermaid(filename)
+
+    output_file = tmp_path / filename
+    assert output_file.exists()
+    content = output_file.read_text()
+    assert "graph TD" in content
+    assert root in content and child in content
+    assert f"{root} --> {child}" in content
+    assert f"{child} -.-> {root}" in content  # citation
