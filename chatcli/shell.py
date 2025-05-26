@@ -165,6 +165,20 @@ class ChatCLIShell(cmd.Cmd):
         self.current_id = new_id
         print(f"Promoted to new node {new_id}")
 
+    def do_smart_thread(self, arg):
+        question = arg.strip()
+        if not question:
+            print("Usage: smart_thread <question>")
+            return
+        try:
+            new_id, answer = self.graph.smart_thread(question, from_node_id=self.current_id)
+            self.current_id = new_id
+            print("[Smart Thread Response]")
+            print(answer)
+            print(f"New node: {new_id}")
+        except Exception as e:
+            print(f"Error: {e}")
+
     def do_suggest_replies(self, arg):
         try:
             suggestions = self.graph.suggest_replies(self.current_id)

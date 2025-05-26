@@ -1,5 +1,3 @@
-import sys
-
 import pytest
 from unittest.mock import patch, MagicMock
 from chatcli.shell import ChatCLIShell
@@ -70,3 +68,11 @@ def test_suggest_validation_sources(shell, capsys):
     shell.onecmd("suggest_validation_sources")
     out = capsys.readouterr().out
     assert "Validation Suggestions" in out
+
+def test_smart_thread(shell, capsys):
+    shell.onecmd("new What is loop fusion?")
+    shell.graph.data[shell.current_id]["response"] = "Loop fusion improves locality."
+    shell.onecmd("smart_thread How does it affect memory?")
+    out = capsys.readouterr().out
+    assert "Smart Thread Response" in out
+    assert "New node" in out

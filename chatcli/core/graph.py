@@ -811,6 +811,16 @@ class ConversationGraph:
         self._save()
         return node_id
 
+    def smart_thread(self, question, from_node_id=None, top_k=3):
+        answer = self.smart_ask(question, from_node_id=from_node_id, top_k=top_k)
+        new_id = self.promote_smart_ask(parent_id=from_node_id)
+
+        if self._last_smart_ask:
+            for cited in self._last_smart_ask.get("citations", []):
+                self.add_citation(new_id, cited)
+
+        return new_id, answer
+
     def ancestors(self, node_id):
         path = []
         current = self.data.get(node_id)
