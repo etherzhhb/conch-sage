@@ -12,3 +12,5 @@ pytest_cache/
 .idea/
 .vscode/
 data/
+.coverage
+coverage.xml
