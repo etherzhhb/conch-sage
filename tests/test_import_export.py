@@ -52,7 +52,7 @@ def test_import_from_missing_file(capsys):
     graph = ConversationGraph()
     graph.import_from_file("nonexistent.json")
     captured = capsys.readouterr()
-    assert "not found" in captured.out.lower()
+    assert "no data imported" in captured.out.lower()
 
 
 def test_import_from_invalid_format(tmp_path, capsys):

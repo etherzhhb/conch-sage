@@ -7,6 +7,8 @@ import json
 import numpy as np
 import faiss
 
+from chatcli.core.mock import mock_llm_response
+
 
 class ConversationGraph:
 
@@ -22,22 +24,64 @@ class ConversationGraph:
             self.data = {}
             self._last_smart_ask = None
 
-    def _load(self, path):
-        if not path.exists():
-            return {}, None
-        with open(path, "r") as f:
-            obj = json.load(f)
-            return obj.get("nodes", {}), obj.get("last_smart_ask", None)
-
-    def _save(self):
-        if self._path is None:
-            return
-        os.makedirs(self._path.parent, exist_ok=True)
-        with open(self._path, "w") as f:
+    def _write_to_file(self, path):
+        os.makedirs(path.parent, exist_ok=True)
+        with open(path, "w") as f:
             json.dump({
                 "nodes": self.data,
                 "last_smart_ask": self._last_smart_ask
             }, f, indent=2)
+
+    def _load(self, path):
+        if not path.exists():
+            return {}, None
+        try:
+            with open(path, "r") as f:
+                obj = json.load(f)
+        except json.JSONDecodeError as e:
+            print(f"Warning: failed to load {path}: {e}")
+            return {}, None
+        return obj.get("nodes", {}), obj.get("last_smart_ask", None)
+
+    def _save(self):
+        if self._path is None:
+            return
+
+        self._write_to_file(self._path)
+
+    def export_to_file(self, filename):
+        """
+        Export the full conversation graph to a JSON file, including smart-ask context.
+
+        Args:
+            filename (str): Name of the file to save to (relative to export directory).
+        """
+        filepath = self._save_dir / filename
+        self._write_to_file(filepath)
+        print(f"Exported full graph to {filepath}")
+
+    def import_from_file(self, filename, dry_run_embedding=False):
+        """
+        Import a full conversation graph (including smart-ask context) from a JSON file.
+
+        Args:
+            filename (str): File name relative to the export directory.
+            dry_run_embedding (bool): If True, skip actual embedding.
+        """
+        filepath = self._save_dir / filename
+        self.data, self._last_smart_ask = self._load(filepath)
+
+        if not self.data:
+            print(f"No data imported from {filepath}")
+            return
+
+        config = load_config()
+        if config.get("auto_embed", False):
+            for node_id in self.data:
+                self.embed_node(node_id, dry_run=dry_run_embedding)
+
+        self._save()
+        print(f"Imported full graph from {filepath}")
 
     def _generate_id(self):
         return str(uuid.uuid4())[:8]
@@ -130,47 +174,6 @@ class ConversationGraph:
             self.embed_node(node_id, dry_run=dry_run_embedding)
         self._save()
 
-    def export_to_file(self, filename):
-        """
-        Export the full conversation graph to a JSON file, including smart-ask context.
-
-        Args:
-            filename (str): Name of the file to save to (relative to export directory).
-        """
-        filepath = self._save_dir / filename
-        with open(filepath, "w") as f:
-            json.dump({
-                "nodes": self.data,
-                "last_smart_ask": self._last_smart_ask
-            }, f, indent=2)
-        print(f"Exported full graph to {filepath}")
-
-    def import_from_file(self, filename, dry_run_embedding=False):
-        """
-        Import a full conversation graph (including smart-ask context) from a JSON file.
-
-        Args:
-            filename (str): File name relative to the export directory.
-            dry_run_embedding (bool): If True, skip actual embedding.
-        """
-        filepath = self._save_dir / filename
-        if not filepath.exists():
-            print(f"File {filename} not found in {self._save_dir}")
-            return
-
-        with open(filepath, "r") as f:
-            obj = json.load(f)
-            self.data = obj.get("nodes", {})
-            self._last_smart_ask = obj.get("last_smart_ask", None)
-
-        config = load_config()
-        if config.get("auto_embed", False):
-            for node_id in self.data:
-                self.embed_node(node_id, dry_run=dry_run_embedding)
-
-        self._save()
-        print(f"Imported full graph from {filepath}")
-
     def list_saved_files(self):
         """
         List all saved JSON files in the configured save directory.
@@ -227,15 +230,48 @@ class ConversationGraph:
         self._save()
         return summary
 
+    def _has_path(self, start_id, target_id, visited=None):
+        if visited is None:
+            visited = set()
+        if start_id == target_id:
+            return True
+        visited.add(start_id)
+        for neighbor in self.data.get(start_id, {}).get("citations", []):
+            if neighbor not in visited and self._has_path(neighbor, target_id, visited):
+                return True
+        return False
+
     def add_citation(self, from_node_id, to_node_id, dry_run_embedding=False):
+        """
+        Add a citation edge from one node to another, indicating that `from_node_id`
+        references or builds upon the content of `to_node_id`.
+
+        This creates a directed edge in the citation graph: from → to.
+        The method ensures that this operation does not introduce a cycle, preserving
+        the directed acyclic graph (DAG) invariant of the citation structure.
+
+        Args:
+            from_node_id (str): The ID of the citing node.
+            to_node_id (str): The ID of the node being cited.
+            dry_run_embedding (bool): If True, skip actual embedding update.
+
+        Raises:
+            ValueError: If either node ID is invalid or the citation would introduce a cycle.
+        """
         if from_node_id not in self.data or to_node_id not in self.data:
             raise ValueError("Invalid node ID(s)")
+
+        if self._has_path(to_node_id, from_node_id):
+            raise ValueError("Citation would introduce a cycle")
+
         self.data[from_node_id].setdefault("citations", [])
         if to_node_id not in self.data[from_node_id]["citations"]:
             self.data[from_node_id]["citations"].append(to_node_id)
+
         config = load_config()
         if config.get("auto_embed", False):
             self.embed_node(from_node_id, dry_run=dry_run_embedding)
+
         self._save()
 
     def get_citations(self, node_id):
@@ -619,6 +655,13 @@ class ConversationGraph:
             print(f"Smart-cited {len(matches)} nodes from {from_node_id}")
         return matches
 
+    def ask_llm_direct(self, prompt):
+        config = load_config()
+        provider = config["provider"]
+        model = config.get("openai_chat_model") if provider == "openai" else config.get("bedrock_model")
+        print(f"[LLM] Using {provider}: {model}")
+        return mock_llm_response(prompt)
+
     def smart_ask(self, query_text, from_node_id=None, top_k=3):
         """
         Run a smart-ask by semantically retrieving relevant nodes and generating an LLM answer.
@@ -647,7 +690,10 @@ class ConversationGraph:
         full_prompt = "\n\n".join(context_chunks)
         full_prompt += "\n\n[QUESTION]\n" + query_text.strip()
 
-        answer = self.ask_llm_with_context(from_node_id, full_prompt)
+        if from_node_id is None or from_node_id not in self.data:
+            answer = self.ask_llm_direct(full_prompt)
+        else:
+            answer = self.ask_llm_with_context(from_node_id, full_prompt)
 
         self._last_smart_ask = {
             "from_node_id": from_node_id,
@@ -708,3 +754,24 @@ class ConversationGraph:
 
         self._save()
         return node_id
+
+    def ancestors(self, node_id):
+        path = []
+        current = self.data.get(node_id)
+        while current and current.get("parent_id"):
+            parent_id = current["parent_id"]
+            path.append(parent_id)
+            current = self.data.get(parent_id)
+        return path
+
+    def descendants(self, node_id):
+        result = []
+
+        def dfs(nid):
+            children = self.data.get(nid, {}).get("children", [])
+            for child_id in children:
+                result.append(child_id)
+                dfs(child_id)
+
+        dfs(node_id)
+        return result

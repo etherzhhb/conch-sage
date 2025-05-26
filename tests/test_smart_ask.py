@@ -67,3 +67,8 @@ def test_promote_smart_ask(graph):
     if "citations" in new_node:
         for cited in new_node["citations"]:
             assert cited in graph.data
+
+def test_smart_ask_with_empty_graph(graph):
+    result = graph.smart_ask("What is loop fusion?")
+    assert isinstance(result, str)
+    assert "loop" in result.lower() or len(result) > 0
