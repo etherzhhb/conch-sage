@@ -6,7 +6,7 @@ def graph():
     return ConversationGraph(storage_path=":memory:")
 
 def test_mock_websearch(graph):
-    results = graph.mock_websearch("what is Halide")
+    results = graph.mock_websearch("what is Halide", max_results=3)
     assert isinstance(results, list)
     assert len(results) == 3
     for r in results:

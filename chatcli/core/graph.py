@@ -268,6 +268,10 @@ class ConversationGraph:
         return results
 
     def mock_websearch(self, query, max_results=5):
+        """
+        Return a list of mock search results in Tavily-style format.
+        Each result includes title, snippet, and URL.
+        """
         return [
             {
                 "title": f"Result {i + 1} for '{query}'",
