@@ -608,3 +608,54 @@ class ConversationGraph:
         prompt = "\n\n".join(context_chunks)
         prompt += f"\n\n[QUESTION]\n{query_text.strip()}"
         return self.ask_llm_with_context(from_node_id, prompt)
+
+    def promote_smart_ask(self, parent_id: str) -> str:
+        """
+        Promote the most recent smart-ask result into a new graph node.
+
+        This function takes the cached smart-ask result — including the question, generated answer,
+        and any cited nodes — and creates a new child node under the given `parent_id`. It copies
+        the smart-ask content into the graph and establishes citation edges from the new node to
+        its cited sources. If `auto_embed` is enabled, it will also embed the new node.
+
+        Args:
+            parent_id (str): The ID of the node that initiated the smart-ask.
+
+        Returns:
+            str: The node ID of the newly created promoted smart-ask node.
+
+        Raises:
+            ValueError: If no smart-ask has been performed yet or if it doesn't match the parent.
+        """
+        if not hasattr(self, "_last_smart_ask"):
+            raise ValueError("No smart-ask result available to promote.")
+
+        data = self._last_smart_ask
+        if data["from_node_id"] != parent_id:
+            raise ValueError("Smart-ask result does not match current node.")
+
+        prompt = data["question"]
+        response = data["response"]
+        citations = data.get("citations", [])
+
+        node_id = self._generate_id()
+        self.data[node_id] = {
+            "id": node_id,
+            "parent_id": parent_id,
+            "prompt": prompt,
+            "response": response,
+            "children": [],
+            "tags": ["smart-ask"]
+        }
+
+        self.data[parent_id]["children"].append(node_id)
+
+        for cited_id in citations:
+            self.add_citation(node_id, cited_id)
+
+        config = load_config()
+        if config.get("auto_embed", False):
+            self.embed_node(node_id)
+
+        self._save()
+        return node_id
