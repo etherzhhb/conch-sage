@@ -145,6 +145,28 @@ Promoted to new node: z9y8x7w6
 
 ---
 
+## 🤖 Assistant Automation Opportunities
+
+| Responsibility | Current | Assist (LLM) | Automate | Plan |
+|----------------|---------|--------------|----------|------|
+| Drive questions | `new`, `reply` | `suggest-replies` | ❌ | Prototype CLI for `suggest-replies` |
+| Promote answers | `promote_smart_ask` | Suggest promotion | `--promote` flag | Add option + toggle config |
+| Validate results | Manual reading | Suggest sources, show citation scores | ❌ | Support `suggest-validation-sources` |
+| Tag nodes | Manual `tag` command | `suggest-tags` | Basic auto-tag | Add LLM/tag-based suggestion during embed |
+
+---
+
+## 🔧 CLI Design Enhancements (Planned)
+
+- `suggest-replies` – Recommend follow-up questions from current context
+- `smart_ask --promote` – Auto-promote good responses (opt-in)
+- `suggest-tags` – Suggest tags using LLM or topic clustering
+- `suggest-validation-sources` – Provide citations or source ranking after `smart_ask`
+
+These enhancements aim to reduce user burden while preserving user control.
+
+---
+
 ## 🔍 Roadmap
 
 * [ ] `smart_thread`: automate smart-ask → promote → cite
