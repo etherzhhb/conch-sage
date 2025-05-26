@@ -556,9 +556,12 @@ class ConversationGraph:
         index.add(np.stack(vectors))
         D, I = index.search(np.array([query_vector], dtype=np.float32), top_k)
 
-        result_ids = [id_map[i] for i in I[0] if i < len(id_map)]
-        return result_ids
-
+        result_ids_scores = [
+            (id_map[i], -D[0][j])  # negate distance to turn it into similarity
+            for j, i in enumerate(I[0])
+            if i < len(id_map)
+        ]
+        return result_ids_scores
 
     def embed_all(self, dry_run=False):
         count = 0
