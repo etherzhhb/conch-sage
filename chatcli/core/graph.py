@@ -1,3 +1,5 @@
+import os
+
 from chatcli.core.config import load_config
 import uuid
 from pathlib import Path
@@ -23,6 +25,7 @@ class ConversationGraph:
             return json.load(f)
 
     def _save(self):
+        os.makedirs(os.path.dirname(DATA_PATH), exist_ok=True)
         with open(DATA_PATH, "w") as f:
             json.dump(self.data, f, indent=2)
 
