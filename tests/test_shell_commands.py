@@ -31,5 +31,5 @@ def test_smart_ask_and_promote(shell, capsys):
 
 def test_invalid_command(shell, capsys):
     shell.onecmd("foobar invalid command")
-    err = capsys.readouterr().err
-    assert "Unknown syntax: foobar invalid command" in err
+    out = capsys.readouterr().out
+    assert "Unknown syntax: foobar invalid command" in out

@@ -1,4 +1,6 @@
 import cmd
+import sys
+
 from prompt_toolkit import PromptSession
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.completion import WordCompleter
@@ -13,8 +15,8 @@ COMMANDS = [
 class ChatCLIShell(cmd.Cmd):
     prompt = "chatcli> "
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, stdout=sys.stdout):
+        super().__init__(stdout=stdout)
         self.graph = ConversationGraph()
         self.current_id = None
         self.web_results = []
