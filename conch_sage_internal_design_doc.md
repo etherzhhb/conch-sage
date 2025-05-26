@@ -2,9 +2,7 @@
 
 ## 🚀 Project Scope
 
-**Conch Sage** is a personal-use,
-CLI-based AI research assistant that models conversation
-as a **hierarchical directed acyclic graph (DAG)** — supporting:
+**Conch Sage** is a personal-use, CLI-based AI research assistant that models conversation as a **hierarchical directed acyclic graph (DAG)** — supporting:
 
 * Deep, branching discussions
 * Semantic citations
@@ -40,124 +38,76 @@ as a **hierarchical directed acyclic graph (DAG)** — supporting:
 
 ---
 
-# 📚 Internal Design Document
+## 🌀 System Architecture Diagram
 
-## Project Overview
-
-**Conch Sage** is a CLI-based personal research assistant that integrates LLM workflows,
-semantic memory, and a graph-based conversation model.
-It’s designed for structured exploration, reproducible reasoning, and deep document-centric research.
-
----
-
-## Architecture Summary
-
-### Core Modules
-
-| Module          | Purpose                                         |
-| --------------- | ----------------------------------------------- |
-| `graph.py`      | Manages DAG of nodes, citations, metadata       |
-| `shell.py`      | Interactive REPL with `cmd` and prompt\_toolkit |
-| `main.py`       | CLI launcher (`conch-sage`)                     |
-| `web.py` (mock) | Mock Tavily-style web results                   |
-| `faiss` backend | Embedding + semantic search index               |
-
----
-
-## Key Features
-
-### 🌿 Graph Engine
-
-* Nodes with prompts/responses, tags, summaries
-* Parent/child and citation edges
-* Full-text and tag-based search
-* Tree view, backtracking, jump navigation
-
-### 🧠 LLM Workflows
-
-* `smart_ask`: RAG-style prompt generation from semantically matched nodes
-* `smart_cite`: semantic citation suggestions
-* `promote_smart_ask`: convert smart-ask into node
-* `cite_smart_ask`: citation edge reconstruction
-
-### 📄 Document Support
-
-* Markdown/RST import
-* Git-tracked versioning and inline diffing
-* Subtree summarization
-
-### 🔍 Embedding + Search
-
-* FAISS-based simsearch with `embed_*` commands
-* Embedding preview (`embed_summary`)
-* `--dry-run` and `top-k` options for control
+```
++-------------------------+
+|      CLI Shell         |
+|  (cmd + prompt_toolkit)|
++-----------+-------------+
+            |
+            v
++-----------+-------------+
+|     Graph Engine        |
+|  - Nodes & Edges (DAG) |
+|  - Prompts/Responses    |
+|  - Citations & Tags     |
++-----------+-------------+
+            |
+            v
++-----------+-------------+
+|     Embedding Layer     |
+|  - FAISS Index          |
+|  - Provider Backends    |
+|    (OpenAI / Bedrock)   |
++-----------+-------------+
+            |
+            v
++-----------+-------------+
+|     I/O and Storage     |
+|  - conversations.json   |
+|  - import/export (md)   |
+|  - git diff/versioning  |
++-------------------------+
+```
 
 ---
 
-## CLI Interface
+## 🔍 Example CLI Sessions
 
-* REPL with history, paging, fuzzy input (prompt\_toolkit)
-* Modular command set: `new`, `reply`, `goto`, `view`, `tree`, `embed_node`, `simsearch`, etc.
-* Persistent graph store with autosave/load
+### New Node and Reply
 
----
+```bash
+chatcli> new What is loop fusion?
+New node: a1b2c3d4
 
-## Testing + CI
+chatcli> reply It combines loops to improve cache locality.
+Replied with node: e5f6g7h8
 
-* `pytest` suite:
+chatcli> view
+[e5f6g7h8] It combines loops to improve cache locality.
+```
 
-  * Core graph ops
-  * Smart workflows
-  * Shell simulation
-  * Document diff and import
-* `pytest-cov` for coverage
-* GitHub Actions workflows:
+### Embedding and Semantic Search
 
-  * `test.yml` (push)
-  * `pr-check.yml` (pull\_request)
-* Codecov integration planned
+```bash
+chatcli> embed_node
+[Embedding] Using openai (mock)
+Embedded node e5f6g7h8
 
----
+chatcli> simsearch fusion
+Results:
+e5f6g7h8  0.89  It combines loops to improve cache locality.
+```
 
-## Project Metadata
+### Smart Ask and Promote
 
-* Name: `conch-sage`
-* CLI entry point: `conch-sage`
-* GitHub repo: `etherzhhb/conch-sage`
-* Packaging: `setup.py`, `pyproject.toml`, `requirements.txt`
-* CI: ✅ test + PR badge, ⏳ Codecov
+```bash
+chatcli> smart_ask What are loop transformations?
+Smart response: Loop interchange, unrolling, fusion, and tiling optimize nested loops.
 
----
-
-## Roadmap
-
-* [ ] `smart_thread`: automate smart-ask → promote → cite
-* [ ] `reuse`, `edit_prompt` commands
-* [ ] `describe_node`, `show_tags`, `show_citations`
-* [ ] LLM/embedding backend toggling (OpenAI vs Bedrock)
-* [ ] Graph export improvements
-* [ ] PyPI packaging (optional)
+chatcli> promote_smart_ask
+Promoted to new node: z9y8x7w6
+```
 
 ---
-
-## 📊 Citation Edge Semantics (Design Detail)
-
-* `add_citation(from_node_id, to_node_id)` adds a **directed edge** representing:
-  “**from\_node** references or depends on **to\_node**.”
-
-* Citation edges are stored in `from_node["citations"]`
-
-* This reflects RAG-style flows, where one node builds on or synthesizes others
-
-* When `auto_embed` is enabled, `from_node` is **re-embedded** to reflect the updated semantic context (now referencing `to_node`)
-
-* `to_node` is left unchanged — it remains static as the source being cited
-
----
-
-## Summary
-
-Conch Sage blends structured exploration, prompt engineering,
-and reproducibility into a lightweight but powerful terminal-based research tool.
-It enables citation-aware thinking, graph-native prompt management,
-and hybrid workflows that unify documents and LLM context.
