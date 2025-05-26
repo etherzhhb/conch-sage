@@ -3,10 +3,6 @@ import pytest
 import json
 from chatcli.core.graph import ConversationGraph
 
-@pytest.fixture
-def graph():
-    return ConversationGraph(storage_path=":memory:")
-
 def test_save_and_load(tmp_path):
     path = tmp_path / "graph.json"
     g = ConversationGraph(storage_path=path)

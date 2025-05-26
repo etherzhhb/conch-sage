@@ -1,22 +1,24 @@
 import pytest
 from chatcli.core.graph import ConversationGraph
+from chatcli.core.graph_ops import websearch
 
-@pytest.fixture
-def graph():
-    return ConversationGraph(storage_path=":memory:")
 
-def test_mock_websearch(graph):
-    results = graph.mock_websearch("what is Halide", max_results=3)
+def test_websearch_returns_expected_format():
+    from chatcli.core.graph_ops import websearch
+    results = websearch("What is Halide", max_results=3)
     assert isinstance(results, list)
     assert len(results) == 3
     for r in results:
-        assert "title" in r and "url" in r
+        assert "title" in r
+        assert "url" in r
+        assert "snippet" in r
 
-def test_saveurl_and_citeurl(graph):
+def test_saveurl_and_citeurl(graph, mock_websearch):
     nid = graph.new("Start")
-    results = graph.mock_websearch("Halide scheduling")
+    results = websearch("Halide scheduling")  # uses mocked version via monkeypatch
     url_node = graph.save_web_result(results[0], current_id=nid)
     graph.add_citation(nid, url_node)
+
     assert url_node in graph.data
     assert "url" in graph.data[url_node]
     assert url_node in graph.data[nid]["citations"]

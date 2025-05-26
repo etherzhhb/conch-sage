@@ -1,10 +1,6 @@
 import pytest
 from chatcli.core.graph import ConversationGraph
 
-@pytest.fixture
-def graph():
-    return ConversationGraph(storage_path=":memory:")
-
 def test_new_node(graph):
     nid = graph.new("What is Halide?")
     assert nid in graph.data
@@ -20,7 +16,7 @@ def test_reply_node(graph):
 def test_get_embedding_mock(graph):
     emb = graph.get_embedding("loop fusion")
     assert isinstance(emb, list)
-    assert len(emb) == 4
+    assert len(emb) == 768
 
 def test_embed_node(graph):
     nid = graph.new("What is scheduling?")
