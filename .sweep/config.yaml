@@ -1,7 +1,0 @@
-rules:
-  - trigger: always
-    plan:
-      - name: General
-        description: Sweep should analyze all pull requests and issues for actionable code changes.
-        prompt: >
-          You are a helpful developer. Suggest minimal, accurate code changes for the request.
