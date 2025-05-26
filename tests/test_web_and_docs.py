@@ -42,3 +42,24 @@ def test_diff_docs(graph, tmp_path):
     diff = graph.diff_docs(a, b)
     assert "---" in diff and "+++" in diff
     assert "multiple threads" in diff
+
+def test_import_and_improve_doc(tmp_path):
+    graph = ConversationGraph(storage_path=":memory:")
+
+    # Simulate document to import
+    doc_path = tmp_path / "doc1.md"
+    doc_path.write_text("This is a document about pipelining.")
+
+    node_id = graph.import_doc(str(doc_path))
+    assert node_id in graph.data
+    assert "imported document" in graph.data[node_id]["prompt"].lower()
+    assert "pipelining" in graph.data[node_id]["response"].lower()
+
+    # Improve the imported doc
+    improved_id = graph.improve_doc(node_id)
+    assert improved_id in graph.data
+    assert improved_id in graph.data[node_id]["children"]
+
+    improved_node = graph.data[improved_id]
+    assert "prompt" in improved_node and "improved" in improved_node["prompt"].lower()
+    assert "response" in improved_node and len(improved_node["response"]) > 0

@@ -411,28 +411,36 @@ class ConversationGraph:
         print(f"[SUMMARIZER] Using {provider}: {model}")
         return "[SUMMARY] " + text[:max_length] + "..."
 
-    def import_doc(self, filepath, current_id=None, dry_run_embedding=False):
-        from pathlib import Path
-        path = Path(filepath)
-        if not path.exists():
-            raise FileNotFoundError(f"File not found: {filepath}")
-        content = path.read_text()
-        node_id = self._generate_id()
-        self.data[node_id] = {
-            "id": node_id,
-            "type": "doc",
-            "filename": str(path.name),
-            "parent_id": current_id,
-            "prompt": f"Imported document: {path.name}",
-            "response": content,
-            "children": [],
-            "tags": ["doc"]
-        }
-        if current_id:
-            self.data[current_id]["children"].append(node_id)
-        config = load_config()
-        if config.get("auto_embed", False):
-            self.embed_node(node_id, dry_run=dry_run_embedding)
+    def import_doc(self, filepath: str) -> str:
+        """
+        Import a document from a file and create a new node in the graph.
+
+        The prompt is set to a metadata label indicating the filename.
+        The response field contains the document content (truncated to 1000 characters).
+        This enables downstream operations like embedding, improvement, or smart-ask.
+
+        Args:
+            filepath (str): Path to the document to import.
+
+        Returns:
+            str: Node ID of the newly created document node.
+        """
+        filename = os.path.basename(filepath)
+        try:
+            with open(filepath, "r", encoding="utf-8") as f:
+                file_content = f.read()
+        except Exception as e:
+            print(f"Failed to read file: {e}")
+            return None
+
+        prompt = f"Imported document: {filename}"
+        response = file_content[:1000]  # FXIME: truncate if long
+
+        node_id = self.new(prompt)
+        self.data[node_id]["response"] = response
+        self.data[node_id]["filepath"] = filepath
+
+        self.embed_node(node_id)
         self._save()
         return node_id
 
