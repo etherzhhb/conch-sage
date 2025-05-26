@@ -63,3 +63,10 @@ def test_suggest_tags(shell, capsys):
     shell.onecmd("suggest_tags")
     out = capsys.readouterr().out
     assert "Tag Suggestions" in out
+
+def test_suggest_validation_sources(shell, capsys):
+    shell.onecmd("new Halide optimizes compute and schedule.")
+    shell.graph.data[shell.current_id]["response"] = "Halide separates what to compute from how to compute it."
+    shell.onecmd("suggest_validation_sources")
+    out = capsys.readouterr().out
+    assert "Validation Suggestions" in out

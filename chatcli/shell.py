@@ -194,3 +194,14 @@ class ChatCLIShell(cmd.Cmd):
             print(suggestions)
         except Exception as e:
             print(f"Error: {e}")
+
+    def do_suggest_validation_sources(self, arg):
+        try:
+            top_k = 3
+            if arg.strip().isdigit():
+                top_k = int(arg.strip())
+            suggestions = self.graph.suggest_validation_sources(self.current_id, top_k=top_k)
+            print("[Validation Suggestions]")
+            print(suggestions)
+        except Exception as e:
+            print(f"Error: {e}")

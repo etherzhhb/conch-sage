@@ -863,3 +863,18 @@ class ConversationGraph:
         print(f"[LLM] Using {provider}: {model}")
         tags_text = self.ask_llm_with_context(node_id, prompt)
         return tags_text.strip()
+
+    def suggest_validation_sources(self, node_id, top_k=3):
+        node = self.data.get(node_id)
+        if not node:
+            raise ValueError("Node not found")
+        response = node.get("response", "")
+        prompt = (
+            f"Suggest {top_k} sources or search queries I could use to validate or fact-check this explanation:\n\n"
+            f"{response.strip()}"
+        )
+        config = load_config()
+        provider = config["provider"]
+        model = config.get("openai_chat_model") if provider == "openai" else config.get("bedrock_model")
+        print(f"[LLM] Using {provider}: {model}")
+        return self.ask_llm_with_context(node_id, prompt)
