@@ -15,7 +15,7 @@ def test_mock_websearch(graph):
 def test_saveurl_and_citeurl(graph):
     nid = graph.new("Start")
     results = graph.mock_websearch("Halide scheduling")
-    url_node = graph.save_web_result(results[0], parent_id=nid)
+    url_node = graph.save_web_result(results[0], current_id=nid)
     graph.add_citation(nid, url_node)
     assert url_node in graph.data
     assert "url" in graph.data[url_node]
