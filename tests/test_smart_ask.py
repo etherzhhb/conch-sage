@@ -1,9 +1,4 @@
 import pytest
-from chatcli.core.graph import ConversationGraph
-
-@pytest.fixture
-def graph():
-    return ConversationGraph(storage_path=":memory:")
 
 def test_smart_ask_mock(graph):
     nid = graph.new("Start node")
