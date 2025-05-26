@@ -31,7 +31,7 @@ def test_promote_smart_ask(graph):
     assert new_id in graph.data
     assert graph.data[new_id]["prompt"] == "Explain Halide"
     assert graph.data[new_id]["response"] == "Halide is a scheduling DSL."
-    assert graph.data[new_id]["parent"] == child
+    assert graph.data[new_id]["parent_id"] == child
 
 def test_cite_smart_ask(graph):
     nid = graph.new("Node A")
