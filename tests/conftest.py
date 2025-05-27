@@ -24,26 +24,6 @@ def mock_websearch(monkeypatch):
         "chatcli.core.graph_ops.websearch",  mock_websearch_fn
     )
 
-# Mock the LLM completion call for smart_ask(), improve_doc(), etc.
-@pytest.fixture
-def mock_llm(monkeypatch):
-    def mock_llm_fn(*args, **kwargs):
-        prompt = args[-1] if args else kwargs.get("prompt", "")
-        return f"[MOCK LLM RESPONSE]\nPrompt: {prompt}"
-
-    monkeypatch.setattr(
-        "chatcli.core.graph_llm.ask_llm_with_context",
-        mock_llm_fn
-    )
-
-# Mock get_embedding to return predictable vectors
-@pytest.fixture
-def mock_embedding(monkeypatch):
-    monkeypatch.setattr(
-        "chatcli.core.graph_llm.get_embedding",
-        lambda text: [0.1] * 768  # Simulate OpenAI-style embedding
-    )
-
 @pytest.fixture
 def graph():
     return ConversationGraph(storage_path=":memory:")
