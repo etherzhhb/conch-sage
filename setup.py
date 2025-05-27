@@ -13,6 +13,14 @@ setup(
         "langchain-ollama",
         "jinja2",
     ],
+    extras_require={
+        "dev": [
+            "pytest",
+            "pytest-cov",
+            "sentence-transformers",
+            "torch"
+        ]
+    },
     entry_points={
         'console_scripts': [
             'conch-sage=chatcli.main:main',

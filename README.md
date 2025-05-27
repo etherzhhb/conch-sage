@@ -18,7 +18,7 @@
 Create and activate a virtual environment (recommended), then install:
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ```
 
 ## Development & Testing
