@@ -27,6 +27,14 @@ class ConversationGraph(GraphCore):
         self._data, self._last_smart_ask = load_graph_state(self)
         self._config = load_config()
 
+    def update_last_smart_ask(self, from_node_id, query_text, answer, citations):
+        self._last_smart_ask = {
+            "from_node_id": from_node_id,
+            "question": query_text.strip(),
+            "response": answer,
+            "citations": citations,
+        }
+
     def new_thread(self, prompt, dry_run_embedding=False):
         node_id = self.add_node(prompt)
         self._data[node_id]["response"] = f"[MOCK RESPONSE to: {prompt}]"
