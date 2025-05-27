@@ -1,12 +1,16 @@
-# chatcli global config
+# Select which LLM provider to use: openai, bedrock, ollama, or mock
+provider: ollama
 
-provider: openai  # or 'bedrock'
+# Ollama configuration
+ollama_model: mistral
 
-openai_api_key: sk-xxxxxxx
-openai_embedding_model: text-embedding-3-small
+# OpenAI configuration
 openai_chat_model: gpt-4o
+openai_api_key: sk-...
 
-bedrock_region: us-west-2
-bedrock_model: anthropic.claude-3-sonnet
+# Bedrock configuration
+bedrock_model: anthropic.claude-3-sonnet-20240229-v1:0
+aws_region: us-west-2
 
-auto_embed: true
+# Mock configuration (for testing)
+mock_response: "[MOCK] This is a mock LLM response."

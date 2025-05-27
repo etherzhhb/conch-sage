@@ -1,6 +1,20 @@
 import pytest
+import yaml
+from unittest.mock import patch
 
-from chatcli.core.graph import ConversationGraph
+# Autouse fixture to patch load_config() across all tests
+def load_test_config():
+    with open("config.test.yaml") as f:
+        return yaml.safe_load(f)
+
+def pytest_sessionstart(session):
+    patcher = patch("chatcli.core.config.load_config", side_effect=load_test_config)
+    patcher.start()
+    session._conch_config_patcher = patcher
+
+def pytest_sessionfinish(session, exitstatus):
+    if hasattr(session, "_conch_config_patcher"):
+        session._conch_config_patcher.stop()
 
 
 # Mock the websearch function used by smart_ask() and suggest_tags()
@@ -24,6 +38,9 @@ def mock_websearch(monkeypatch):
         "chatcli.core.graph_ops.websearch",  mock_websearch_fn
     )
 
+
+# Core graph fixture
 @pytest.fixture
 def graph():
+    from chatcli.core.graph import ConversationGraph
     return ConversationGraph(storage_path=":memory:")

@@ -7,8 +7,16 @@ name = "conch-sage"
 version = "0.1.0"
 description = "CLI-based personal research assistant with semantic memory and LLM workflows."
 authors = [{ name = "Your Name", email = "your@email.com" }]
-dependencies = []
 requires-python = ">=3.8"
+dependencies = [
+    "faiss-cpu",
+    "prompt_toolkit",
+    "typer",
+    "pyyaml",
+    "langchain",
+    "langchain-ollama",
+    "jinja2"
+]
 
 [project.scripts]
 conch-sage = "chatcli.main:main"

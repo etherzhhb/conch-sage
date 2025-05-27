@@ -3,6 +3,7 @@ prompt_toolkit
 typer
 pyyaml
 langchain
+langchain-ollama
 jinja2
 
 pytest
