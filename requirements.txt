@@ -1,6 +1,9 @@
-pytest
 faiss-cpu
 prompt_toolkit
 typer
 pyyaml
+langchain
+jinja2
+
+pytest
 pytest-cov
