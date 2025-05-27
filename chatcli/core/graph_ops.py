@@ -3,8 +3,6 @@ import faiss
 import numpy as np
 
 from chatcli.core.config import load_config
-from chatcli.core.graph_llm import ask_llm_with_context
-
 
 def smart_ask(graph, query_text, from_node_id=None, top_k=3):
     """
@@ -117,18 +115,6 @@ def smart_thread(graph, question, from_node_id=None, top_k=3):
 
     return new_id, answer
 
-def embed_node(graph, node_id, dry_run=False):
-    if node_id not in graph.data:
-        raise ValueError("Node not found")
-    node = graph.data[node_id]
-    combined = f"{node.get('prompt', '')}\n{node.get('response', '')}"
-    if dry_run:
-        print(f"[DRY RUN] Would embed node {node_id}")
-    else:
-        node["embedding"] = graph.get_embedding(combined)
-    graph._save()
-    print(f"Embedded node {node_id}")
-
 
 def improve_doc(graph, node_id, dry_run_embedding=False):
     if node_id not in graph.data:
@@ -147,9 +133,13 @@ def improve_doc(graph, node_id, dry_run_embedding=False):
         "tags": ["doc", "improved"]
     }
     graph.data[node_id]["children"].append(new_id)
+
+    graph.add_citation(new_id, node_id)
+
     config = load_config()
     if config.get("auto_embed", False):
-        graph.embed_node(node_id, dry_run=dry_run_embedding)
+        graph.embed_node(new_id, dry_run=dry_run_embedding)
+
     graph._save()
     return new_id
 

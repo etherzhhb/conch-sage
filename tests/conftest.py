@@ -40,7 +40,7 @@ def mock_llm(monkeypatch):
 @pytest.fixture
 def mock_embedding(monkeypatch):
     monkeypatch.setattr(
-        "chatcli.core.graph_ops.get_embedding",
+        "chatcli.core.graph_llm.get_embedding",
         lambda text: [0.1] * 768  # Simulate OpenAI-style embedding
     )
 
