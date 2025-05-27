@@ -132,3 +132,37 @@ class GraphCore:
         node = self.data[node_id]
         prompt = node['prompt'][:80].replace("\n", " ")
         return f"[{node_id}] {prompt}"
+
+    def print_tree(self, root_id=None, indent=0, current_id=None):
+        def _print_node(node_id, indent):
+            node = self.data.get(node_id)
+            if not node:
+                print("Node not found.")
+                return
+            comment_str = f"  # {node['comment']}" if 'comment' in node else ""
+            summary_str = f"\n{' ' * (indent + 2)}[summary] {node['summary']}" if 'summary' in node else ""
+            tag_str = f"  [tags: {', '.join(node['tags'])}]" if node['tags'] else ""
+            subtree_summary_str = f"\n{' ' * (indent + 2)}[subtree_summary] {node['subtree_summary']}" if 'subtree_summary' in node else ""
+            citation_str = f"\n{' ' * (indent + 2)}[cites] {', '.join(node['citations'])}" if 'citations' in node else ""
+            print(
+                " " * indent + f"[{node['id']}] {node['prompt']}{comment_str}{tag_str}" + summary_str + subtree_summary_str + citation_str)
+            for child_id in node.get("children", []):
+                _print_node(child_id, indent + 2)
+
+        # Keyword resolution
+        if root_id in ("root", None):
+            root_nodes = [nid for nid, node in self.data.items() if not node.get("parent")]
+            for rid in root_nodes:
+                _print_node(rid, indent)
+        elif root_id == "parent":
+            if not current_id:
+                print("Error: current_id is required for 'parent'")
+                return
+            current_node = self.data.get(current_id)
+            parent_id = current_node.get("parent_id") if current_node else None
+            if not parent_id:
+                print(f"This node has no parent. fallback to current node {current_id}")
+                parent_id = current_id
+            _print_node(parent_id, indent)
+        else:
+            _print_node(root_id, indent)

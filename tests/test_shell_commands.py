@@ -76,3 +76,73 @@ def test_smart_thread(shell, capsys):
     out = capsys.readouterr().out
     assert "Smart Thread Response" in out
     assert "New node" in out
+
+def test_goto_valid_node(shell, capsys):
+    shell.onecmd("new Root node")
+    root_id = shell.current_id
+    shell.onecmd("reply Child node")
+    child_id = shell.current_id
+
+    # Now go back to root
+    shell.onecmd(f"goto {root_id}")
+    assert shell.current_id == root_id
+
+def test_goto_invalid_node(shell, capsys):
+    shell.onecmd("new Some node")
+    shell.onecmd("goto nonexistent123")
+    out = capsys.readouterr().out
+    assert "Node nonexistent123 not found." in out
+
+def test_parent_from_child(shell, capsys):
+    shell.onecmd("new Root node")
+    root_id = shell.current_id
+    shell.onecmd("reply Child node")
+    child_id = shell.current_id
+
+    # Move back to parent
+    shell.onecmd("parent")
+    out = capsys.readouterr().out
+
+    assert shell.current_id == root_id
+    assert f"Moved to parent node {root_id}" in out
+
+def test_parent_from_root(shell, capsys):
+    shell.onecmd("new Top-level node")
+    root_id = shell.current_id
+
+    shell.onecmd("parent")
+    out = capsys.readouterr().out
+
+    # Should print message and keep current ID unchanged
+    assert "This node has no parent." in out
+    assert shell.current_id == root_id
+
+def test_print_tree_root(shell, capsys):
+    shell.onecmd("new First root")
+    shell.onecmd("new Second root")
+    shell.onecmd("tree_all")
+    out = capsys.readouterr().out
+
+    assert "First root" in out
+    assert "Second root" in out
+
+def test_print_tree_parent_from_child(shell, capsys):
+    shell.onecmd("new Parent node")
+    parent_id = shell.current_id
+    shell.onecmd("reply Child node")
+
+    shell.onecmd("tree parent")
+    out = capsys.readouterr().out
+
+    assert "Parent node" in out
+    assert "Child node" in out
+
+def test_print_tree_parent_from_root(shell, capsys):
+    shell.onecmd("new Root node")
+    root_id = shell.current_id
+
+    shell.onecmd("tree parent")
+    out = capsys.readouterr().out
+
+    assert "This node has no parent" in out
+    assert "Root node" in out
