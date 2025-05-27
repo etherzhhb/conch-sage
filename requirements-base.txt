@@ -5,6 +5,3 @@ pyyaml
 langchain
 langchain-ollama
 jinja2
-
-pytest
-pytest-cov

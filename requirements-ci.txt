@@ -1,8 +1,4 @@
-# Minimal dependencies for GitHub Actions CI (no torch, no transformers)
+-r requirements-base.txt
 pytest
 pytest-cov
-faiss-cpu
-jinja2
-typer
-prompt_toolkit
-pyyaml
+# intentionally excludes torch, transformers, or sentence-transformers
