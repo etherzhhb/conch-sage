@@ -154,6 +154,10 @@ def simsearch(graph, query_text, top_k=3):
     vectors = []
 
     for node_id, node in graph.data.items():
+        if "embedding" not in node:
+            print(f"[warn] Node {node_id} missing embedding — skipping in simsearch")
+            continue
+
         id_map.append(node_id)
         vectors.append(np.array(node["embedding"], dtype=np.float32))
 

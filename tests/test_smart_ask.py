@@ -276,3 +276,21 @@ def test_embed_node_uses_graph_data(graph):
     graph.embed_node(nid)
     assert nid in graph.data
     assert "embedding" in graph.data[nid]
+
+def test_simsearch_skips_unembedded_nodes(graph):
+    # Simulate config where auto_embed is disabled
+    graph._config["auto_embed"] = False
+
+    # Create a few nodes without embedding
+    node1 = graph.new("Node without embedding 1")
+    node2 = graph.new("Node without embedding 2")
+    graph.data[node1]["response"] = "Test content one"
+    graph.data[node2]["response"] = "Test content two"
+
+    # Manually remove embeddings if somehow added
+    graph.data[node1].pop("embedding", None)
+    graph.data[node2].pop("embedding", None)
+
+    # Run simsearch — should warn and return empty list
+    matches = graph.simsearch("search query", top_k=5)
+    assert matches == []
