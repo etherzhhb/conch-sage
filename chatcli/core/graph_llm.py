@@ -34,37 +34,54 @@ def ask_llm_with_context(graph, node_id, question):
 
 
 def suggest_replies(graph, node_id, top_k=3):
+    from chatcli.core.prompt_loader import render_template
+
     node = graph.data.get(node_id)
     if not node:
         raise ValueError("Node not found")
-    context = node.get("response") or node.get("prompt")
-    prompt = (
-        f"Based on the following conversation:\n\n{context.strip()}\n\n"
-        f"Suggest {top_k} relevant follow-up questions."
+
+    context = node.get("response") or node.get("prompt", "")
+
+    prompt = render_template(
+        "suggest_replies.j2",
+        context=context.strip(),
+        top_k=top_k,
     )
+
     return graph.ask_llm_with_context(node_id, prompt)
 
-
 def suggest_tags(graph, node_id, top_k=3):
+    from chatcli.core.prompt_loader import render_template
+
     node = graph.data.get(node_id)
     if not node:
         raise ValueError("Node not found")
-    prompt = (
-        f"Suggest {top_k} useful tags for organizing the following content:\n\n"
-        f"{node.get('prompt', '')}\n\n{node.get('response', '')}"
+
+    prompt = render_template(
+        "suggest_tags.j2",
+        top_k=top_k,
+        prompt=node.get("prompt", ""),
+        response=node.get("response", ""),
     )
+
     return graph.ask_llm_with_context(node_id, prompt).strip()
 
 
 def suggest_validation_sources(graph, node_id, top_k=3):
+    from chatcli.core.prompt_loader import render_template
+
     node = graph.data.get(node_id)
     if not node:
         raise ValueError("Node not found")
+
     response = node.get("response", "")
-    prompt = (
-        f"Suggest {top_k} sources or search queries I could use to validate or fact-check this explanation:\n\n"
-        f"{response.strip()}"
+
+    prompt = render_template(
+        "suggest_validation_sources.j2",
+        top_k=top_k,
+        response=response.strip(),
     )
+
     return graph.ask_llm_with_context(node_id, prompt)
 
 

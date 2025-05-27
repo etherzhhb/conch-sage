@@ -17,33 +17,37 @@ def smart_ask(graph, query_text, from_node_id=None, top_k=3):
     Returns:
         str: The LLM-generated answer.
     """
+    if from_node_id is None:
+        answer = graph.ask_llm_direct(query_text)
+        graph.update_last_smart_ask(from_node_id=from_node_id, query_text=query_text,
+                                    answer=answer, citations=[])
+        return answer
+
+    from chatcli.core.prompt_loader import render_template
+
     matches = graph.simsearch(query_text, top_k=top_k)
-    context_chunks = []
+    context_parts = []
     citations = []
 
     for node_id, _score in matches:
         node = graph.data.get(node_id, {})
         context = node.get("response") or node.get("prompt")
         if context:
-            label = f"[CONTEXT from {node_id}]"
-            context_chunks.append(label + "\n" + context.strip())
+            context_parts.append(f"[{node_id}]: {context}")
             citations.append(node_id)
 
-    full_prompt = "\n\n".join(context_chunks)
-    full_prompt += "\n\n[QUESTION]\n" + query_text.strip()
+    context = "\n\n".join(context_parts) or "No relevant information found."
 
-    if from_node_id is None or from_node_id not in graph.data:
-        answer = graph.ask_llm_direct(full_prompt)
-    else:
-        answer = graph.ask_llm_with_context(from_node_id, full_prompt)
+    prompt = render_template(
+        "smart_ask.j2",
+        node_id=from_node_id,
+        context=context,
+        question=query_text,
+    )
 
-    graph._last_smart_ask = {
-        "from_node_id": from_node_id,
-        "question": query_text.strip(),
-        "response": answer,
-        "citations": citations,
-    }
-
+    answer = graph.ask_llm_with_context(from_node_id, prompt)
+    graph.update_last_smart_ask(from_node_id=from_node_id, query_text=query_text,
+                                answer=answer, citations=citations)
     return answer
 
 def promote_smart_ask(graph, parent_id: str) -> str:
