@@ -71,7 +71,7 @@ def test_smart_ask_with_empty_graph(graph):
     assert "loop" in result.lower() or len(result) > 0
 
 
-def test_ask_llm_with_context_uses_citations(graph, mock_llm):
+def test_ask_llm_with_context_uses_citations(graph):
     a = graph.new("Main question")
     b = graph.reply(a, "Cited insight")
     graph.data[b]["response"] = "This is relevant background."
@@ -81,7 +81,7 @@ def test_ask_llm_with_context_uses_citations(graph, mock_llm):
     assert "relevant background" in result
     assert "What does this mean?" in result
 
-def test_ask_llm_with_context_truncates_long_prompts(graph, mock_llm):
+def test_ask_llm_with_context_truncates_long_prompts(graph):
     a = graph.new("Main question")
     long_text = "Lorem ipsum " * 1000  # very long
     b = graph.reply(a, "Verbose citation")
@@ -94,7 +94,7 @@ def test_ask_llm_with_context_truncates_long_prompts(graph, mock_llm):
 
 
 
-def test_ask_llm_with_context_falls_back_to_summary(graph, mock_llm):
+def test_ask_llm_with_context_falls_back_to_summary(graph):
     a = graph.new("Summary fallback test")
     b = graph.reply(a, "Too long to include")
     graph.data[b]["response"] = "A" * 5000
@@ -106,7 +106,7 @@ def test_ask_llm_with_context_falls_back_to_summary(graph, mock_llm):
     assert len(result) < 5000  # implies some fallback was triggered
 
 
-def test_suggest_replies_from_node_content(graph, mock_llm):
+def test_suggest_replies_from_node_content(graph):
     nid = graph.new("Prompt about Graph Theory")
     graph.data[nid]["response"] = "This node is about DFS and BFS."
     suggestions = graph.suggest_replies(nid, top_k=2)
@@ -116,7 +116,7 @@ def test_suggest_replies_invalid_node(graph):
     with pytest.raises(ValueError):
         graph.suggest_replies("nonexistent_node")
 
-def test_suggest_replies_top_k_control(graph, mock_llm):
+def test_suggest_replies_top_k_control(graph):
     nid = graph.new("Prompt")
     graph.data[nid]["response"] = "Response"
     suggestions = graph.suggest_replies(nid, top_k=5)
@@ -139,7 +139,7 @@ def test_suggest_replies_passes_context_id(graph, monkeypatch):
 
     assert called["node_id"] == nid
 
-def test_suggest_tags_from_node_content(graph, mock_llm):
+def test_suggest_tags_from_node_content(graph):
     nid = graph.new("Prompt about AI")
     graph.data[nid]["response"] = "Covers deep learning and transformers."
     tags = graph.suggest_tags(nid, top_k=4)
@@ -151,7 +151,7 @@ def test_suggest_tags_invalid_node(graph):
         graph.suggest_tags("invalid_node")
 
 
-def test_suggest_tags_top_k_customization(graph, mock_llm):
+def test_suggest_tags_top_k_customization(graph):
     nid = graph.new("Tag prompt")
     graph.data[nid]["response"] = "Taggable content"
     tags = graph.suggest_tags(nid, top_k=6)
@@ -174,7 +174,7 @@ def test_suggest_tags_passes_context_id(graph, monkeypatch):
     assert called["node_id"] == nid
     assert "tag1" in result
 
-def test_suggest_validation_sources_from_response(graph, mock_llm):
+def test_suggest_validation_sources_from_response(graph):
     nid = graph.new("Validate this")
     graph.data[nid]["response"] = "This claim is based on recent work in RLHF."
     sources = graph.suggest_validation_sources(nid, top_k=3)
@@ -186,7 +186,7 @@ def test_suggest_validation_sources_invalid_node(graph):
     with pytest.raises(ValueError):
         graph.suggest_validation_sources("bad_id")
 
-def test_suggest_validation_sources_top_k_passed(graph, mock_llm):
+def test_suggest_validation_sources_top_k_passed(graph):
     nid = graph.new("Evidence check")
     graph.data[nid]["response"] = "Needs 5 verification points."
     sources = graph.suggest_validation_sources(nid, top_k=5)
@@ -208,7 +208,7 @@ def test_suggest_validation_sources_context_id_used(graph, monkeypatch):
     assert called["node_id"] == nid
     assert "source1" in result
 
-def test_improve_doc_creates_child_node(graph, mock_llm):
+def test_improve_doc_creates_child_node(graph):
     nid = graph.new("Original")
     graph.data[nid]["response"] = "Needs improvement."
     new_id = graph.improve_doc(nid)
@@ -218,7 +218,7 @@ def test_improve_doc_creates_child_node(graph, mock_llm):
 
 
 
-def test_improve_doc_preserves_metadata(graph, mock_llm):
+def test_improve_doc_preserves_metadata(graph):
     nid = graph.new("Improve this")
     graph.data[nid]["response"] = "Rough draft."
     graph.data[nid]["filename"] = "draft.md"
@@ -229,7 +229,7 @@ def test_improve_doc_preserves_metadata(graph, mock_llm):
     assert new_node["filename"] == "draft.md"
 
 
-def test_improve_doc_adds_citation(graph, mock_llm):
+def test_improve_doc_adds_citation(graph):
     nid = graph.new("Draft")
     graph.data[nid]["response"] = "Base version."
     new_id = graph.improve_doc(nid)
@@ -250,7 +250,7 @@ def test_improve_doc_respects_auto_embed_flag(graph, monkeypatch):
     assert called["embedded"] == new_id
 
 
-def test_embed_node_assigns_embedding(graph, mock_embedding):
+def test_embed_node_assigns_embedding(graph):
     nid = graph.new("To embed")
     graph.data[nid]["response"] = "Vector me."
     graph.embed_node(nid)
@@ -264,13 +264,13 @@ def test_embed_node_invalid_id_raises(graph):
     with pytest.raises(ValueError):
         graph.embed_node("missing_node")
 
-def test_embed_node_respects_dry_run(graph, mock_embedding):
+def test_embed_node_respects_dry_run(graph):
     nid = graph.new("Dry run", dry_run_embedding=True)
     graph.data[nid]["response"] = "Test"
     graph.embed_node(nid, dry_run=True)
     assert "embedding" not in graph.data[nid]
 
-def test_embed_node_uses_graph_data(graph, mock_embedding):
+def test_embed_node_uses_graph_data(graph):
     nid = graph.new("Data path test")
     graph.data[nid]["response"] = "Hello"
     graph.embed_node(nid)
