@@ -1,18 +1,7 @@
-# Select which LLM provider to use: openai, bedrock, ollama, or mock
 provider: ollama
-
-# Ollama configuration
 ollama_model: mistral
-
-# OpenAI configuration
-openai_chat_model: gpt-4o
-openai_api_key: sk-...
-
-# Bedrock configuration
-bedrock_model: anthropic.claude-3-sonnet-20240229-v1:0
-aws_region: us-west-2
-
-# Mock configuration (for testing)
-mock_response: "[MOCK] This is a mock LLM response."
-
 auto_embed: true
+
+embedding:
+  provider: sentence-transformers
+  model: all-MiniLM-L6-v2

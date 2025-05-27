@@ -1,6 +1,7 @@
 # chatcli/core/graph.py
 
 from chatcli.core.config import load_config
+from chatcli.core.embedding_provider import get_embedding_provider
 from chatcli.core.graph_core import GraphCore
 from chatcli.core.graph_io import (
     import_doc, save_doc, save_doc_version,
@@ -26,6 +27,12 @@ class ConversationGraph(GraphCore):
         super().__init__(storage_path)
         self._data, self._last_smart_ask = load_graph_state(self)
         self._config = load_config()
+        self._embedding_provider = None
+
+    def get_embedding_provider(self):
+        if self._embedding_provider is None:
+            self._embedding_provider = get_embedding_provider(self._config)
+        return self._embedding_provider
 
     def update_last_smart_ask(self, from_node_id, query_text, answer, citations):
         self._last_smart_ask = {

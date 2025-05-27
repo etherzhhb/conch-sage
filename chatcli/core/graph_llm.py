@@ -96,11 +96,9 @@ def estimate_tokens(graph, text):
 
 
 def get_embedding(graph, text):
-    config = graph._config
-    provider = config["provider"]
-    print(f"[Embedding] Using {provider} (mock)")
-    return [0.1] * 768  # mock vector
-
+    provider = graph.get_embedding_provider()
+    print(f"[Embedding] Using {provider.__class__.__name__}")
+    return provider.embed(text)
 
 def embed_node(graph, node_id, dry_run=False):
     if node_id not in graph.data:
