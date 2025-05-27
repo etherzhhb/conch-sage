@@ -91,3 +91,62 @@ def test_export_mermaid(tmp_path):
     assert root in content and child in content
     assert f"{root} --> {child}" in content
     assert f"{child} -.-> {root}" in content  # citation
+
+
+def test_save_doc_creates_file(graph, tmp_path):
+    nid = graph.new("Save me")
+    graph.data[nid]["response"] = "This is the saved content."
+    filepath = tmp_path / "output.md"
+    result = graph.save_doc(nid, filepath)
+    assert result == filepath
+    assert filepath.read_text() == "This is the saved content."
+
+
+def test_save_doc_invalid_node_raises(graph, tmp_path):
+    with pytest.raises(ValueError):
+        graph.save_doc("missing", tmp_path / "fail.md")
+
+def test_save_doc_prints_confirmation(graph, tmp_path, capsys):
+    nid = graph.new("Logging test")
+    graph.data[nid]["response"] = "Log this"
+    path = tmp_path / "log.md"
+    graph.save_doc(nid, path)
+    out = capsys.readouterr().out
+    assert "Saved node" in out
+    assert str(path) in out
+
+
+def test_import_doc_creates_node_with_file_contents(graph, tmp_path):
+    filepath = tmp_path / "doc.md"
+    filepath.write_text("This is a test document.")
+    node_id = graph.import_doc(filepath)
+    assert graph.data[node_id]["response"] == "This is a test document."
+
+
+
+def test_import_doc_adds_metadata(graph, tmp_path):
+    filepath = tmp_path / "meta.rst"
+    filepath.write_text("Metadata check")
+    nid = graph.import_doc(filepath)
+    node = graph.data[nid]
+    assert node["filename"] == "meta.rst"
+    assert node["type"] == "doc"
+    assert "doc" in node["tags"]
+
+
+
+def test_import_doc_applies_truncation(graph, tmp_path):
+    filepath = tmp_path / "truncate.md"
+    filepath.write_text("A" * 5000)
+    nid = graph.import_doc(filepath, truncate=100)
+    assert len(graph.data[nid]["response"]) == 100
+
+
+
+def test_import_doc_handles_parent_link(graph, tmp_path):
+    parent = graph.new("Parent")
+    filepath = tmp_path / "child.md"
+    filepath.write_text("Child node")
+    child = graph.import_doc(filepath, current_id=parent)
+    assert child in graph.data[parent]["children"]
+    assert graph.data[child]["parent_id"] == parent

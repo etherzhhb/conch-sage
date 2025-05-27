@@ -11,13 +11,13 @@ from chatcli.core.graph_llm import (
     suggest_replies,
     suggest_tags,
     suggest_validation_sources, ask_llm_with_context, ask_llm_direct,
+    estimate_tokens, get_embedding, embed_node
 )
 from chatcli.core.graph_ops import (
     smart_ask,
     promote_smart_ask,
     cite_smart_ask,
-    smart_thread,
-    embed_node as _embed_node, improve_doc, simsearch, save_web_result
+    smart_thread, improve_doc, simsearch, save_web_result
 )
 
 
@@ -35,8 +35,8 @@ class ConversationGraph(GraphCore):
         self._save()
         return node_id
 
-    def new(self, prompt):
-        return self.new_thread(prompt)
+    def new(self, *args, **kwargs):
+        return self.new_thread(*args, **kwargs)
 
     def reply(self, parent_id, prompt, dry_run_embedding=False):
         if parent_id not in self._data:
@@ -77,13 +77,10 @@ class ConversationGraph(GraphCore):
         self._save()
 
     def embed_node(self, node_id, dry_run=False):
-        return _embed_node(self, node_id, dry_run=dry_run)
+        return embed_node(self, node_id, dry_run=dry_run)
 
     def get_embedding(self, text):
-        config = self._config
-        provider = config["provider"]
-        print(f"[Embedding] Using {provider} (mock)")
-        return [0.1] * 768  # mock vector
+        return get_embedding(self, text=text)
 
     # LLM Suggestions
     def ask_llm_with_context(self, *args, **kwargs):
@@ -92,6 +89,9 @@ class ConversationGraph(GraphCore):
     # LLM Suggestions
     def ask_llm_direct(self, *args, **kwargs):
         return ask_llm_direct(self, *args, **kwargs)
+
+    def estimate_tokens(self, *args, **kwargs):
+        return estimate_tokens(self, *args, **kwargs)
 
     def suggest_replies(self, *args, **kwargs):
         return suggest_replies(self, *args, **kwargs)
