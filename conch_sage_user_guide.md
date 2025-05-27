@@ -44,13 +44,17 @@ Conch Sage is your assistant — you steer the conversation, it supports with me
 
 ## Core Commands
 
+## Core Commands
+
 | Command                      | Description                                      |
 | ---------------------------- | ------------------------------------------------ |
 | `new <question>`             | Start a new root-level discussion node           |
 | `reply <text>`               | Reply to current node, creating a child          |
 | `view`                       | View current node prompt and response            |
-| `tree`                       | Show the full DAG/tree of your conversation      |
-| `goto <node_id>`             | Jump to a different node                         |
+| `tree`                       | Show the tree from current, root, or parent      |
+| `tree_all`                   | Show the full DAG from all root-level nodes      |
+| `goto <node_id>`             | Jump to a different node in the DAG              |
+| `parent`                     | Move to the parent of the current node           |
 | `smart_ask <question>`       | Ask an LLM question using semantic RAG context   |
 | `smart_ask --promote`        | Ask and automatically promote the LLM response   |
 | `promote_smart_ask`          | Save the last smart\_ask as a new node           |

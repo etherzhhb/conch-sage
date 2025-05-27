@@ -7,9 +7,10 @@ from prompt_toolkit.completion import WordCompleter
 from chatcli.core.graph import ConversationGraph
 
 COMMANDS = [
-    "new", "reply", "view", "tree", "import", "improve", "save", "websearch",
+    "new", "reply", "view", "tree", "tree_all", "import", "improve", "save", "websearch",
     "saveurl", "citeurl", "ask", "embed_summary", "embed_node", "embed_all",
-    "embed_subtree", "simsearch", "smart_ask", "promote_smart_ask", "exit"
+    "embed_subtree", "simsearch", "smart_ask", "promote_smart_ask",
+    "goto", "parent", "exit"
 ]
 
 class ChatCLIShell(cmd.Cmd):
@@ -50,7 +51,12 @@ class ChatCLIShell(cmd.Cmd):
         print(f"[{node['id']}] {node['prompt']}\n{node['response']}")
 
     def do_tree(self, arg):
-        self.graph.print_tree(self.current_id or "root")
+        arg = arg.strip()
+        self.graph.print_tree(root_id=arg or None, current_id=self.current_id)
+
+    def do_tree_all(self, arg):
+        """Show the full DAG starting from the root."""
+        self.graph.print_tree("root")
 
     def do_import(self, arg):
         try:
@@ -205,3 +211,26 @@ class ChatCLIShell(cmd.Cmd):
             print(suggestions)
         except Exception as e:
             print(f"Error: {e}")
+
+    def do_goto(self, arg):
+        node_id = arg.strip()
+        if not node_id:
+            print("Usage: goto <node_id>")
+            return
+        if node_id not in self.graph.data:
+            print(f"Node {node_id} not found.")
+            return
+        self.current_id = node_id
+        print(f"Moved to node {node_id}")
+
+    def do_parent(self, arg):
+        if not self.current_id:
+            print("No current node.")
+            return
+        node = self.graph.get(self.current_id)
+        parent_id = node.get("parent_id")
+        if not parent_id:
+            print("This node has no parent.")
+            return
+        self.current_id = parent_id
+        print(f"Moved to parent node {parent_id}")
