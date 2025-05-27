@@ -1,0 +1,3 @@
+provider: mock
+mock_response: "[TEST-MOCK] This is a fake response from the mock LLM."
+auto_embed: true
