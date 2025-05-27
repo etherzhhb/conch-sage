@@ -14,3 +14,5 @@ aws_region: us-west-2
 
 # Mock configuration (for testing)
 mock_response: "[MOCK] This is a mock LLM response."
+
+auto_embed: true
