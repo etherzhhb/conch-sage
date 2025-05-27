@@ -1,0 +1,8 @@
+# Minimal dependencies for GitHub Actions CI (no torch, no transformers)
+pytest
+pytest-cov
+faiss-cpu
+jinja2
+typer
+prompt_toolkit
+pyyaml
