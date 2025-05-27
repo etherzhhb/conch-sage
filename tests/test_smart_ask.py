@@ -294,3 +294,19 @@ def test_simsearch_skips_unembedded_nodes(graph):
     # Run simsearch — should warn and return empty list
     matches = graph.simsearch("search query", top_k=5)
     assert matches == []
+
+def test_simsearch_with_auto_embed(graph):
+    graph._config["auto_embed"] = True
+
+    # Create a node and trigger embedding
+    node_id = graph.new("Relevant node")
+    graph.data[node_id]["response"] = "This is embedded content"
+
+    # Explicitly embed the node (simulating auto_embed=True behavior)
+    graph.embed_node(node_id)
+
+    # Perform simsearch
+    matches = graph.simsearch("embedded content", top_k=5)
+
+    # Should include the embedded node
+    assert node_id in [m[0] for m in matches]
